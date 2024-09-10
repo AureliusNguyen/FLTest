@@ -14,6 +14,9 @@ torch = [
 ]
 pfl = {extras = ["pytorch"], version = "^0.2.0"}
 torchvision = "0.15.2+cu118"
+flwr = {extras = ["simulation"], version = "^1.11.0"}
+flwr-datasets = {extras = ["vision"], version = "^0.3.0"}
+matplotlib = "^3.9.2"
 
 [tool.poetry.extras]
 pytorch = [ 'torch', 'cmake']
