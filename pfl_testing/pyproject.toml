@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "pfl_testing"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.12"
+joblib = "^1.4.2"
+torch = [
+  { version = "^2.0.1+cu118", source = "torch_cu118", markers = "sys_platform == 'linux'", optional = true },
+  { version = "^2.0.1", source = "PyPI", markers = "sys_platform == 'darwin'",  optional = true },
+]
+pfl = {extras = ["pytorch"], version = "^0.2.0"}
+torchvision = "0.15.2+cu118"
+
+[tool.poetry.extras]
+pytorch = [ 'torch', 'cmake']
+tf = ['tensorflow', 'tensorflow-macos', 'tensorflow-probability', 'cmake']
+trees = ['scikit-learn', 'xgboost']
+
+[[tool.poetry.source]]
+name = "torch_cu118"
+url = "https://download.pytorch.org/whl/cu118"
+priority = "supplemental"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
