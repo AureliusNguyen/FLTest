@@ -1,0 +1,21 @@
+# defaults:
+#   - experiment: default
+#   # - model: cnn
+#   # - data: cifar10
+#   # - logging: default
+
+# experiment:
+name: "default_experiment"
+framework: "default"
+num_clients: 2
+num_rounds: 2
+epochs: 5
+batch_size: 32
+learning_rate: 0.01
+data_distribution: "iid"
+device: cpu
+
+
+hydra:
+  run:
+    dir: ../experiments/results/${now:%Y-%m-%d_%H-%M-%S}

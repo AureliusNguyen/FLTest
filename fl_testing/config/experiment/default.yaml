@@ -1,9 +1,0 @@
-# experiment:
-name: "default_experiment"
-framework: "nvidia_flare"
-num_clients: 2
-num_rounds: 2
-epochs: 5
-batch_size: 4
-learning_rate: 0.01
-data_distribution: "iid"
