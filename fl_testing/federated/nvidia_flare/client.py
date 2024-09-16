@@ -1,5 +1,5 @@
 # fl_testing/federated/nvidia_flare/client.py
-
+import sys
 import os
 import torch
 from torch import nn
@@ -7,6 +7,10 @@ from torch.optim import SGD
 
 import nvflare.client as flare
 from nvflare.client.tracking import SummaryWriter
+import sys
+sys.path.append('/home/gulzar/Github/fl_frameworks_testing/')
+
+
 
 # Import the SimpleNetwork model from the new location
 from fl_testing.models.pytorch.simple_network import SimpleNetwork
@@ -69,6 +73,7 @@ def main():
                         tag="loss_for_each_batch",
                         scalar_value=avg_loss,
                         global_step=global_step,
+                        scalar=running_loss,
                     )
                     running_loss = 0.0
 

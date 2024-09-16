@@ -6,7 +6,7 @@ from nvflare.job_config.script_runner import ScriptRunner
 # Import the SimpleNetwork model
 from fl_testing.models.pytorch.simple_network import SimpleNetwork
 
-def create_flare_job(n_clients, num_rounds, initial_model):
+def create_flare_job(n_clients, num_rounds, initial_model, train_script):
     """
     Creates a FedAvgJob for Nvidia FLARE.
 
@@ -25,8 +25,7 @@ def create_flare_job(n_clients, num_rounds, initial_model):
         initial_model=initial_model,
     )
 
-    # Add clients
-    train_script = "fl_testing/federated/nvidia_flare/client.py"
+
 
     for i in range(n_clients):
         executor = ScriptRunner(

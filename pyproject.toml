@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "fl_frameworks_testing"
+name = "fl_testing"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
@@ -9,19 +9,28 @@ readme = "README.md"
 python = ">=3.10,<3.12"
 joblib = "1.4.2"
 pfl = {extras = ["pytorch"], version = "0.2.0"}
-torchvision = "0.15.2"
 flwr = {extras = ["simulation"], version = "1.11.1"}
 flwr-datasets = {extras = ["vision"], version = "0.3.0"}
 matplotlib = "3.9.2"
 nvflare = "2.5.0"
 tensorboard = "2.17.1"
 hydra-core = "1.3.2"
-torch = "2.0.1"
+torch = [
+  { version = "^2.0.1+cu118", source = "torch_cu118", markers = "sys_platform == 'linux'", optional = true },
+  { version = "^2.0.1", source = "PyPI", markers = "sys_platform == 'darwin'",  optional = true },
+]
+torchvision = "0.15.2+cu118"
 
 [tool.poetry.extras]
 pytorch = [ 'torch', 'cmake']
 tf = ['tensorflow', 'tensorflow-macos', 'tensorflow-probability', 'cmake']
 trees = ['scikit-learn', 'xgboost']
+
+
+[[tool.poetry.source]]
+name = "torch_cu118"
+url = "https://download.pytorch.org/whl/cu118"
+priority = "supplemental"
 
 
 [build-system]

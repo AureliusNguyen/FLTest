@@ -1,0 +1,11 @@
+# fl_testing/config/config.yaml
+
+defaults:
+  - experiment: default
+  # - model: cnn
+  # - data: cifar10
+  # - logging: default
+
+hydra:
+  run:
+    dir: ../experiments/results/${now:%Y-%m-%d_%H-%M-%S}
