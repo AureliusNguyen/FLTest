@@ -4,7 +4,7 @@ from nvflare.app_opt.pt.job_config.fed_avg import FedAvgJob
 from nvflare.job_config.script_runner import ScriptRunner
 
 # Import the SimpleNetwork model
-from fl_testing.models.pytorch.simple_network import SimpleNetwork
+from fl_testing.models.pytorch.lenet import LeNet
 
 def create_flare_job(n_clients, num_rounds, initial_model, train_script):
     """

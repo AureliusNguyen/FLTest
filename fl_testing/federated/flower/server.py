@@ -6,7 +6,7 @@ from flwr.simulation import run_simulation
 from flwr.client import ClientApp
 
 from fl_testing.federated.flower.client import FlowerClient
-from fl_testing.models.pytorch.simple_network import SimpleNetwork 
+from fl_testing.models.pytorch.lenet import LeNet 
 from fl_testing.data_preprocessing.cifar10_loader import flower_cifar10_load_datasets
 
 
@@ -31,7 +31,7 @@ def server_fn(context):
 
 def run_flower_simulation(cfg):
     def client_fn(context):
-        net = SimpleNetwork().to(cfg.device)
+        net = LeNet().to(cfg.device)
         partition_id = context.node_config["partition-id"]
         trainloader, valloader, _ = flower_cifar10_load_datasets(partition_id=partition_id, num_clients=cfg.num_clients, batch_size=cfg.batch_size)
         return FlowerClient(net, trainloader, valloader, cfg.device).to_client()

@@ -13,7 +13,7 @@ sys.path.append('/home/gulzar/Github/fl_frameworks_testing/')
 
 
 # Import the SimpleNetwork model from the new location
-from fl_testing.models.pytorch.simple_network import SimpleNetwork
+from fl_testing.models.pytorch.lenet import LeNet
 
 # Import the data loader function
 from fl_testing.data_preprocessing.cifar10_loader import (
@@ -24,7 +24,7 @@ def main():
     batch_size = 4
     epochs = 5
     lr = 0.01
-    model = SimpleNetwork()
+    model = LeNet()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     loss_fn = nn.CrossEntropyLoss()
     optimizer = SGD(model.parameters(), lr=lr, momentum=0.9)

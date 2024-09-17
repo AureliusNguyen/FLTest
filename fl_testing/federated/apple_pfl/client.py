@@ -3,20 +3,20 @@ from pfl.model.pytorch import PyTorchModel
 from pfl.metrics import  Weighted
 
 
-from fl_testing.models.pytorch.simple_network import SimpleNetwork
+from fl_testing.models.pytorch.lenet import LeNet
 
 
 
 def get_pfl_pytorch_model():
-    pytorch_model = SimpleNetwork()
+    pytorch_model = LeNet(channels=3)
     loss_fn = torch.nn.CrossEntropyLoss()
 
     def loss(inputs, targets, eval=False):
-        return loss_fn(pytorch_model(inputs.unsqueeze(1)), targets)
+        return loss_fn(pytorch_model(inputs), targets)
 
     def metrics(inputs, targets, eval=True):
         with torch.no_grad():
-            logits = pytorch_model(inputs.unsqueeze(1))
+            logits = pytorch_model(inputs)
             loss = loss_fn(logits, targets).item()
             pred = logits.argmax(dim=1, keepdim=True)
             correct = pred.eq(targets.view_as(pred)).sum().item()

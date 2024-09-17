@@ -3,12 +3,12 @@
 import hydra
 from omegaconf import DictConfig
 from fl_testing.federated.nvidia_flare.server import create_flare_job, run_server
-from fl_testing.models.pytorch.simple_network import SimpleNetwork
+from fl_testing.models.pytorch.lenet import LeNet
 from nvflare.app_opt.pt.job_config.fed_avg import FedAvgJob
 from nvflare.job_config.script_runner import ScriptRunner
 
 # Import the SimpleNetwork model
-from fl_testing.models.pytorch.simple_network import SimpleNetwork
+from fl_testing.models.pytorch.lenet import LeNet
 
 import sys
 
@@ -19,14 +19,14 @@ sys.path.append('/home/gulzar/Github/fl_frameworks_testing/')
 def main(cfg: DictConfig):
     n_clients = cfg.experiment.num_clients
     num_rounds = cfg.experiment.num_rounds
-    initial_model = SimpleNetwork()
+    initial_model = LeNet()
 
     train_script = "/home/gulzar/Github/fl_frameworks_testing/fl_testing/federated/nvidia_flare/client.py"
 
 
 
     job = FedAvgJob(
-        name="jill_hello_fl", n_clients=n_clients, num_rounds=num_rounds, initial_model=SimpleNetwork()
+        name="jill_hello_fl", n_clients=n_clients, num_rounds=num_rounds, initial_model=LeNet()
     )
 
     # Add clients

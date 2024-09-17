@@ -19,12 +19,14 @@ def simulate_fl(cfg):
     )
 
     model_train_params = NNTrainHyperParams(
-        local_learning_rate=cfg.local_lr,
-        local_num_epochs=cfg.local_epochs,
-        local_batch_size=cfg.local_batch_size
+        local_learning_rate=cfg.client_lr,
+        local_num_epochs=cfg.client_epochs,
+        local_batch_size=cfg.client_batch_size
     )
 
-    model_eval_params = NNEvalHyperParams(local_batch_size=cfg.local_batch)
+    print(f"Local batch size: {cfg.client_batch_size}")
+
+    model_eval_params = NNEvalHyperParams(local_batch_size=cfg.client_batch_size)
 
     algorithm_params = NNAlgorithmParams(
         central_num_iterations=cfg.num_rounds,

@@ -9,7 +9,7 @@ from nvflare.apis.dxo import DXO, DataKind
 import torch
 from torch import nn
 from torch.optim import SGD
-from fl_testing.models.pytorch.simple_network import SimpleNetwork
+from fl_testing.models.pytorch.lenet import LeNet
 from fl_testing.data_preprocessing.cifar10_loader import get_cifar10_train_loader
 
 class ClientTrainer(Executor):
@@ -18,7 +18,7 @@ class ClientTrainer(Executor):
         self.batch_size = batch_size
         self.epochs = epochs
         self.lr = lr
-        self.model = SimpleNetwork()
+        self.model = LeNet()
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.loss_fn = nn.CrossEntropyLoss()
         self.optimizer = SGD(self.model.parameters(), lr=self.lr, momentum=0.9)

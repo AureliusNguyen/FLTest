@@ -7,13 +7,15 @@
 # experiment:
 name: "default_experiment"
 framework: "default"
-num_clients: 2
+num_clients: 10
 num_rounds: 2
-epochs: 5
-batch_size: 32
 learning_rate: 0.01
 data_distribution: "iid"
 device: cpu
+client_lr: 0.001
+client_epochs : 2
+client_batch_size: 32
+clients_per_round: 10 
 
 
 hydra:
