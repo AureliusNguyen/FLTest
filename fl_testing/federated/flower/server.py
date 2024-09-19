@@ -1,14 +1,10 @@
-# fl_testing/federated/flower/server.py
-
 from flwr.server.strategy import FedAvg
 from flwr.server import ServerApp, ServerConfig, ServerAppComponents
 from flwr.simulation import run_simulation
 from flwr.client import ClientApp
 
 from fl_testing.federated.flower.client import FlowerClient
-from fl_testing.models.pytorch.lenet import LeNet 
-from fl_testing.data_preprocessing.cifar10_loader import flower_cifar10_load_datasets
-
+from fl_testing.data_preprocessing.pytorch_fl_dataset import get_dataset_for_framework
 
 
 def weighted_average(metrics):
@@ -16,25 +12,29 @@ def weighted_average(metrics):
     examples = [num_examples for num_examples, _ in metrics]
     return {"accuracy": sum(accuracies) / sum(examples)}
 
-def server_fn(context):
-    strategy = FedAvg(
-        fraction_fit=1.0,
-        fraction_evaluate=0.0,
-        min_fit_clients=10,
-        min_evaluate_clients=0,
-        min_available_clients=10,
-        evaluate_metrics_aggregation_fn=weighted_average,
-    )
-    config = ServerConfig(num_rounds=5)
-    return ServerAppComponents(strategy=strategy, config=config)
-
 
 def run_flower_simulation(cfg):
+    
+    fl_dataset_dict =  get_dataset_for_framework(cfg)
+    test_data_loader = fl_dataset_dict['test_data']
+    c2data_loader = fl_dataset_dict['c2data']
+  
     def client_fn(context):
-        net = LeNet().to(cfg.device)
         partition_id = context.node_config["partition-id"]
-        trainloader, valloader, _ = flower_cifar10_load_datasets(partition_id=partition_id, num_clients=cfg.num_clients, batch_size=cfg.batch_size)
-        return FlowerClient(net, trainloader, valloader, cfg.device).to_client()
+        client_data = c2data_loader[partition_id]
+        return FlowerClient(client_data, cfg).to_client()
+
+    def server_fn(context):
+        strategy = FedAvg(
+            fraction_fit=1.0,
+            fraction_evaluate=0.0,
+            min_fit_clients=cfg.num_clients,
+            min_evaluate_clients=0,
+            min_available_clients=cfg.num_clients,
+            evaluate_metrics_aggregation_fn=weighted_average,
+        )
+        config = ServerConfig(num_rounds=cfg.num_rounds)
+        return ServerAppComponents(strategy=strategy, config=config)
 
     client_app = ClientApp(client_fn=client_fn)
     server_app = ServerApp(server_fn=server_fn)

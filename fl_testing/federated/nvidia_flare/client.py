@@ -15,10 +15,9 @@ sys.path.append('/home/gulzar/Github/fl_frameworks_testing/')
 # Import the SimpleNetwork model from the new location
 from fl_testing.models.pytorch.lenet import LeNet
 
-# Import the data loader function
-from fl_testing.data_preprocessing.cifar10_loader import (
-    get_cifar10_train_loader,
-)
+
+from fl_testing.federated.utils import LOSS_FUNCTIONS_PyTorch
+
 
 def main():
     batch_size = 4
@@ -26,7 +25,7 @@ def main():
     lr = 0.01
     model = LeNet()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = LOSS_FUNCTIONS_PyTorch['CrossEntropyLoss']() # --> Fix this to dynamically get the loss function
     optimizer = SGD(model.parameters(), lr=lr, momentum=0.9)
 
     flare.init()

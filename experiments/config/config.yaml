@@ -1,21 +1,22 @@
-# defaults:
-#   - experiment: default
-#   # - model: cnn
-#   # - data: cifar10
-#   # - logging: default
-
-# experiment:
 name: "default_experiment"
-framework: "default"
-num_clients: 10
-num_rounds: 2
-learning_rate: 0.01
-data_distribution: "iid"
+framework: flower
 device: cpu
+
+
+DATASET_DIVISION_CLIENTS: 1000 # to reduce dataset per client and to make simulation faster
+
+
+num_clients: 2
+num_rounds: 2
 client_lr: 0.001
 client_epochs : 2
 client_batch_size: 32
-clients_per_round: 10 
+server_batch_size: 2048
+loss_fn: CrossEntropyLoss
+
+dataset: cifar10
+data_distribution: iid
+dataset_cache_path : /home/gulzar/Github/fl_frameworks_testing/data/dataset_cache
 
 
 hydra:

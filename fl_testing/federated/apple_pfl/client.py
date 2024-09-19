@@ -4,12 +4,13 @@ from pfl.metrics import  Weighted
 
 
 from fl_testing.models.pytorch.lenet import LeNet
+from fl_testing.federated.utils import LOSS_FUNCTIONS_PyTorch
 
 
 
-def get_pfl_pytorch_model():
+def get_pfl_pytorch_model(loss_fn):
     pytorch_model = LeNet(channels=3)
-    loss_fn = torch.nn.CrossEntropyLoss()
+    loss_fn = LOSS_FUNCTIONS_PyTorch[loss_fn]()
 
     def loss(inputs, targets, eval=False):
         return loss_fn(pytorch_model(inputs), targets)

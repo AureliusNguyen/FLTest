@@ -20,6 +20,7 @@ torch = [
   { version = "^2.0.1", source = "PyPI", markers = "sys_platform == 'darwin'",  optional = true },
 ]
 torchvision = "0.15.2+cu118"
+diskcache = "5.6.3"
 
 [tool.poetry.extras]
 pytorch = [ 'torch', 'cmake']

@@ -4,7 +4,7 @@ from pfl.callback import CentralEvaluationCallback
 from pfl.hyperparam import NNTrainHyperParams, NNEvalHyperParams
 
 from fl_testing.federated.apple_pfl.client import get_pfl_pytorch_model
-from fl_testing.data_preprocessing.data_loader import get_fl_mnist
+
 
 
 

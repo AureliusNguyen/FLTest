@@ -10,7 +10,7 @@ import torch
 from torch import nn
 from torch.optim import SGD
 from fl_testing.models.pytorch.lenet import LeNet
-from fl_testing.data_preprocessing.cifar10_loader import get_cifar10_train_loader
+
 
 class ClientTrainer(Executor):
     def __init__(self, batch_size=4, epochs=5, lr=0.01):

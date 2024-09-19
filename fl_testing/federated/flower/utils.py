@@ -1,8 +1,9 @@
 import torch
 from collections import OrderedDict
+from fl_testing.federated.utils import LOSS_FUNCTIONS_PyTorch
 
-def train(net, trainloader, epochs: int, device, verbose=False):
-    criterion = torch.nn.CrossEntropyLoss()
+def train(net, trainloader, epochs: int, device, loss_fn, verbose=False):
+    criterion = LOSS_FUNCTIONS_PyTorch[loss_fn]()
     optimizer = torch.optim.Adam(net.parameters())
     net.train()
     for epoch in range(epochs):
@@ -23,8 +24,8 @@ def train(net, trainloader, epochs: int, device, verbose=False):
             print(f"Epoch {epoch+1}: train loss {epoch_loss}, accuracy {epoch_acc}")
 
 
-def test(net, testloader, device):
-    criterion = torch.nn.CrossEntropyLoss()
+def test(net, testloader, device, loss_fn):
+    criterion = LOSS_FUNCTIONS_PyTorch[loss_fn]()
     correct, total, loss = 0, 0, 0.0
     net.eval()
     with torch.no_grad():
