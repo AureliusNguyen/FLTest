@@ -1,12 +1,12 @@
 # fl_testing/federated/flower/client.py
-from re import L
+
 from flwr.client import NumPyClient
-from fl_testing.models.pytorch.lenet import LeNet
+from fl_testing.models.pytorch.models import get_pytorch_model
 from fl_testing.federated.flower.utils import set_parameters, get_parameters, train, test
 
 class FlowerClient(NumPyClient):
     def __init__(self, client_data, cfg):
-        self.net = LeNet().to(cfg.device)
+        self.net = get_pytorch_model(cfg.model_name, model_cache_dir=cfg.model_cache_path, deterministic=cfg.deterministic, seed=cfg.seed).to(cfg.device)
         self.trainloader = client_data
         self.valloader = client_data
         self.cfg = cfg

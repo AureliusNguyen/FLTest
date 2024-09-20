@@ -1,6 +1,8 @@
 name: "default_experiment"
 framework: flower
 device: cpu
+deterministic: True
+seed: 786 
 
 
 DATASET_DIVISION_CLIENTS: 1000 # to reduce dataset per client and to make simulation faster
@@ -11,12 +13,14 @@ num_rounds: 2
 client_lr: 0.001
 client_epochs : 2
 client_batch_size: 32
-server_batch_size: 2048
+server_batch_size: 1024
 loss_fn: CrossEntropyLoss
 
+model_name: 'LeNet'
 dataset: cifar10
 data_distribution: iid
 dataset_cache_path : /home/gulzar/Github/fl_frameworks_testing/data/dataset_cache
+model_cache_path: /home/gulzar/Github/fl_frameworks_testing/data/models_cache
 
 
 hydra:
