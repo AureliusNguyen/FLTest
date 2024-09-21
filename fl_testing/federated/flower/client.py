@@ -6,7 +6,7 @@ from fl_testing.federated.flower.utils import set_parameters, get_parameters, tr
 
 class FlowerClient(NumPyClient):
     def __init__(self, client_data, cfg):
-        self.net = get_pytorch_model(cfg.model_name, model_cache_dir=cfg.model_cache_path, deterministic=cfg.deterministic, seed=cfg.seed).to(cfg.device)
+        self.net = get_pytorch_model(cfg.model_name, model_cache_dir=cfg.model_cache_path, deterministic=cfg.deterministic,channels=cfg.channels,seed=cfg.seed).to(cfg.device)
         self.trainloader = client_data
         self.valloader = client_data
         self.cfg = cfg
@@ -16,7 +16,7 @@ class FlowerClient(NumPyClient):
 
     def fit(self, parameters, config):
         set_parameters(self.net, parameters)
-        train(self.net, self.trainloader, epochs=self.cfg.client_epochs, device=self.cfg.device, loss_fn=self.cfg.loss_fn)
+        train(self.net, self.trainloader, epochs=self.cfg.client_epochs, device=self.cfg.device, loss_fn=self.cfg.loss_fn, opitmzer_name=self.cfg.optimizer)
         return get_parameters(self.net), len(self.trainloader), {}
 
     def evaluate(self, parameters, config):

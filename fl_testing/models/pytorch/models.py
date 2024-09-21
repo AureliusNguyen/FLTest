@@ -11,7 +11,7 @@ First we check if the model is already in the cache, if not we download/randomly
 """
 
 class LeNet(nn.Module):
-    def __init__(self, channels=3, num_classes=10):
+    def __init__(self, channels, num_classes=10):
         """
         Initialize the LeNet model.
 
@@ -47,16 +47,18 @@ class LeNet(nn.Module):
 
 
 
-def _get_weights_from_cache(model_cache_dir, model_name, model):
+def _get_weights_from_cache(model_cache_dir, mname, model, channels):
     cache = Index(model_cache_dir)
-    state_dict = cache.get(model_name)
+    cache.clear()
+    key = f'{mname}-channels{channels}' 
+    state_dict = cache.get(key)
     if state_dict is None:
         state_dict = model.state_dict()    
-        cache[model_name] = state_dict 
+        cache[key] = state_dict 
     return state_dict
    
 
-def get_pytorch_model(model_name, model_cache_dir, deterministic, seed):    
+def get_pytorch_model(model_name, model_cache_dir, deterministic, channels, seed):    
     model_name2class = {'LeNet': LeNet}
 
     if deterministic is None or model_cache_dir is None or seed is None:
@@ -67,9 +69,9 @@ def get_pytorch_model(model_name, model_cache_dir, deterministic, seed):
         raise ValueError("Model is not defined.")
    
     torch.manual_seed(seed)
-    model = model_name2class[model_name]() # default
+    model = model_name2class[model_name](channels=channels) # default
     if deterministic:
-        state_dict =  _get_weights_from_cache(model_cache_dir, model_name, model)
+        state_dict =  _get_weights_from_cache(model_cache_dir, model_name, model, channels=channels)
         model.load_state_dict(state_dict)
     
     return model

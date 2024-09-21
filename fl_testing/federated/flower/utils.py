@@ -1,10 +1,12 @@
 import torch
 from collections import OrderedDict
 from fl_testing.federated.utils import LOSS_FUNCTIONS_PyTorch
+from fl_testing.federated.utils import OPTIMIZER_PyTorch
 
-def train(net, trainloader, epochs: int, device, loss_fn, verbose=False):
+
+def train(net, trainloader, epochs, device, loss_fn, opitmzer_name, verbose=False):
     criterion = LOSS_FUNCTIONS_PyTorch[loss_fn]()
-    optimizer = torch.optim.Adam(net.parameters())
+    optimizer = OPTIMIZER_PyTorch[opitmzer_name](net.parameters())
     net.train()
     for epoch in range(epochs):
         correct, total, epoch_loss = 0, 0, 0.0

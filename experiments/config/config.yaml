@@ -1,28 +1,41 @@
+defaults:
+    - constants
+    - _self_
+
+
+# Experiment Configuration
 name: "default_experiment"
 framework: flower
-device: cpu
 deterministic: True
-seed: 786 
+seed: 786
+
+# System Resources
+device: cpu
+total_cpus: 10
+total_gpus: 0
 
 
-DATASET_DIVISION_CLIENTS: 1000 # to reduce dataset per client and to make simulation faster
 
-
-num_clients: 2
-num_rounds: 2
-client_lr: 0.001
-client_epochs : 2
-client_batch_size: 32
-server_batch_size: 1024
-loss_fn: CrossEntropyLoss
-
-model_name: 'LeNet'
-dataset: cifar10
+# Dataset Configuration
+dataset: mnist
 data_distribution: iid
-dataset_cache_path : /home/gulzar/Github/fl_frameworks_testing/data/dataset_cache
+DATASET_DIVISION_CLIENTS: 1000  # Reduce dataset per client for faster simulation
+dataset_cache_path: /home/gulzar/Github/fl_frameworks_testing/data/dataset_cache
+max_test_data_size: 2048
+
+# Model Configuration
+model_name: 'LeNet'
 model_cache_path: /home/gulzar/Github/fl_frameworks_testing/data/models_cache
+channels: ${dataset_channels.${dataset}}
 
 
-hydra:
-  run:
-    dir: ../experiments/results/${now:%Y-%m-%d_%H-%M-%S}
+# Federated Learning Parameters
+num_clients: 10
+num_rounds: 4
+client_lr: 0.001
+client_epochs: 2
+client_batch_size: 32
+server_batch_size: 512
+
+
+
