@@ -1,0 +1,29 @@
+dataset_channels:
+    cifar10: 3 # RGB
+    femnist: 3 # Grey
+    mnist: 1
+    pathmnist: 3
+    organamnist: 3
+    superb: None
+    dbpedia_14: None
+    yahoo_answers_topics: None
+
+
+
+# Training Configuration
+loss_fn: CrossEntropyLoss
+optimizer: Adam
+
+# Hydra Configuration
+hydra:
+  run:
+    dir: ../experiments/results/${now:%Y-%m-%d_%H-%M-%S}
+  job_logging:
+    root:
+      level: INFO
+    loggers:
+      flwr:
+        level: INFO
+      accelerate.utils.other:
+        level: ERROR
+    
