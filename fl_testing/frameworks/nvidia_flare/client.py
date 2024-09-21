@@ -16,7 +16,7 @@ sys.path.append('/home/gulzar/Github/fl_frameworks_testing/')
 from fl_testing.models.pytorch.lenet import LeNet
 
 
-from fl_testing.federated.utils import LOSS_FUNCTIONS_PyTorch
+from fl_testing.frameworks.utils import LOSS_FUNCTIONS_PyTorch
 
 
 def main():

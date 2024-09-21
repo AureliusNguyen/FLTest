@@ -1,7 +1,7 @@
 # experiments/scripts/run_flare.py
 
 import hydra
-from fl_testing.federated.apple_pfl.server import simulate_fl
+from fl_testing.frameworks.apple_pfl.server import simulate_fl
 
 
 

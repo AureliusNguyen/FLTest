@@ -1,10 +1,12 @@
 import torch
 from collections import OrderedDict
-from fl_testing.federated.utils import LOSS_FUNCTIONS_PyTorch
-from fl_testing.federated.utils import OPTIMIZER_PyTorch
+from fl_testing.frameworks.utils import LOSS_FUNCTIONS_PyTorch
+from fl_testing.frameworks.utils import OPTIMIZER_PyTorch
+from fl_testing.frameworks.utils  import seed_every_thing
 
-
-def train(net, trainloader, epochs, device, loss_fn, opitmzer_name, verbose=False):
+def train(net, trainloader, epochs, device, loss_fn, opitmzer_name, **args):
+    seed_every_thing(seed=args['seed'])    
+    
     criterion = LOSS_FUNCTIONS_PyTorch[loss_fn]()
     optimizer = OPTIMIZER_PyTorch[opitmzer_name](net.parameters())
     net.train()
@@ -20,13 +22,17 @@ def train(net, trainloader, epochs, device, loss_fn, opitmzer_name, verbose=Fals
             epoch_loss += loss
             total += labels.size(0)
             correct += (torch.max(outputs.data, 1)[1] == labels).sum().item()
+            break 
         epoch_loss /= len(trainloader.dataset)
         epoch_acc = correct / total
-        if verbose:
-            print(f"Epoch {epoch+1}: train loss {epoch_loss}, accuracy {epoch_acc}")
+        
+        # if verbose:
+        #     print(f"Epoch {epoch+1}: train loss {epoch_loss}, accuracy {epoch_acc}")
 
 
-def test(net, testloader, device, loss_fn):
+
+def test(net, testloader, device, loss_fn, **args):
+    seed_every_thing(args['seed'])
     criterion = LOSS_FUNCTIONS_PyTorch[loss_fn]()
     correct, total, loss = 0, 0, 0.0
     net.eval()
@@ -43,11 +49,16 @@ def test(net, testloader, device, loss_fn):
     return loss, accuracy
 
 
+
 def set_parameters(net, parameters):
     params_dict = zip(net.state_dict().keys(), parameters)
     state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
     net.load_state_dict(state_dict, strict=True)
 
+
+
 def get_parameters(net):
     return [val.cpu().numpy() for _, val in net.state_dict().items()]
+
+
 

@@ -2,7 +2,7 @@
 
 import hydra
 from omegaconf import DictConfig
-from fl_testing.federated.nvidia_flare.server import create_flare_job, run_server
+from fl_testing.frameworks.nvidia_flare.server import create_flare_job, run_server
 from fl_testing.models.pytorch.lenet import LeNet
 from nvflare.app_opt.pt.job_config.fed_avg import FedAvgJob
 from nvflare.job_config.script_runner import ScriptRunner

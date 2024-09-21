@@ -3,7 +3,7 @@ from pfl.algorithm import FederatedAveraging, NNAlgorithmParams
 from pfl.callback import CentralEvaluationCallback
 from pfl.hyperparam import NNTrainHyperParams, NNEvalHyperParams
 
-from fl_testing.federated.apple_pfl.client import get_pfl_pytorch_model
+from fl_testing.frameworks.apple_pfl.client import get_pfl_pytorch_model
 
 
 

@@ -3,6 +3,35 @@ from flwr_datasets import FederatedDataset
 from flwr_datasets.partitioner import IidPartitioner
 from diskcache import Index
 from torch.utils.data import DataLoader
+from fl_testing.frameworks.utils  import seed_every_thing
+
+
+import torch
+
+
+def sum_first_batch(dataloader):
+
+    try:
+        batch = next(iter(dataloader))
+    except StopIteration:
+        raise ValueError("The DataLoader is empty. Cannot compute sum on an empty DataLoader.")
+    
+    # Check if the batch is a dictionary
+    if isinstance(batch, dict):
+        # Extract input tensors assuming they are under the key 'img'
+        if "img" not in batch:
+            raise KeyError("The batch dictionary does not contain the key 'img'.")
+        inputs = batch["img"]
+    else:
+        # If the batch is a tuple or list, assume the first element is the input tensor
+        inputs = batch[0]
+    
+    # Compute the sum of all elements in the input tensor
+    total_sum = torch.sum(inputs)
+    
+    return total_sum.item()
+
+
 
 # Define transforms for different dataset types
 transforms_dict = {
@@ -55,6 +84,11 @@ def get_cached_federated_dataset(dataset_name, num_clients, cache_path, partitio
     return dcache[key]
 
 def get_dataset_for_framework(cfg):
+    # generator = torch.Generator()
+    # generator.manual_seed(cfg.seed)
+
+    seed_every_thing(cfg.seed)
+    
     if cfg.framework == 'flower':
         dataset_dict = get_cached_federated_dataset(
             cfg.dataset, 
@@ -62,14 +96,22 @@ def get_dataset_for_framework(cfg):
             cfg.dataset_cache_path, 
             cfg.data_distribution
         )
+
         
-        c2data = {cid: DataLoader(dset, batch_size=cfg.client_batch_size, shuffle=True)
+
+        
+        c2data = {cid: DataLoader(dset, batch_size=cfg.client_batch_size, shuffle=True, num_workers=0)
                   for cid, dset in dataset_dict['c2data'].items()}
+        
+
+        c2sum_first_batch = {c:sum_first_batch(b)for c,b in c2data.items() if c in list(range(cfg.num_clients))}
+        
+        
         test_data = DataLoader(
             dataset_dict['test_data'].select(range(cfg.max_test_data_size)), 
-            batch_size=cfg.server_batch_size
+            batch_size=cfg.server_batch_size, num_workers=0
         )
         
-        return {'test_data': test_data, 'c2data': c2data}
+        return {'test_data': test_data, 'c2data': c2data, 'batch_sum': c2sum_first_batch}
     else:
         raise ValueError(f"Unknown framework: {cfg.framework}")

@@ -4,7 +4,7 @@ from pfl.metrics import  Weighted
 
 
 from fl_testing.models.pytorch.lenet import LeNet
-from fl_testing.federated.utils import LOSS_FUNCTIONS_PyTorch
+from fl_testing.frameworks.utils import LOSS_FUNCTIONS_PyTorch
 
 
 

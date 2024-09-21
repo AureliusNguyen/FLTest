@@ -2,7 +2,7 @@ import torch
 
 import torch.nn as nn
 import torch.nn.functional as F
-
+from fl_testing.frameworks.utils  import seed_every_thing
 from diskcache import Index
 
 """
@@ -59,6 +59,8 @@ def _get_weights_from_cache(model_cache_dir, mname, model, channels):
    
 
 def get_pytorch_model(model_name, model_cache_dir, deterministic, channels, seed):    
+    seed_every_thing(seed)
+
     model_name2class = {'LeNet': LeNet}
 
     if deterministic is None or model_cache_dir is None or seed is None:

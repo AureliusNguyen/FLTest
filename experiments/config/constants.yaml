@@ -26,4 +26,7 @@ hydra:
         level: INFO
       accelerate.utils.other:
         level: ERROR
-    
+
+
+
+framework_cache_path: /home/gulzar/Github/fl_frameworks_testing/data/frameworks_output_cache
