@@ -43,3 +43,7 @@ client_epochs: 1
 client_batch_size: 32
 server_batch_size: 512
 
+
+
+temp_cache_path: /home/gulzar/Github/fl_frameworks_testing/data/temp_cache
+
