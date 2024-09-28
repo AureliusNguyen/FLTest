@@ -18,11 +18,9 @@ from torch.utils.data import DataLoader
 import os
 import copy
 
-import temp
+
 os.environ['PYTHONHASHSEED'] = '786'
 # os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'  # Only if using CUDA
-
-
 
 
 LOSS_FUNCTIONS_PyTorch = {
@@ -32,51 +30,6 @@ LOSS_FUNCTIONS_PyTorch = {
 OPTIMIZER_PyTorch = {
     'Adam': torch.optim.Adam
 }
-
-
-import torch
-from typing import List, Tuple
-
-def fedavg_aggregate(models_state_dict, num_samples):
-    # Ensure the list of models and number of samples have the same length
-    assert len(models_state_dict) == len(num_samples), "The number of models must match the number of sample counts"
-
-    # Initialize a model with the same architecture as the client models
-    global_model_state_dict = copy.deepcopy(models_state_dict[0])
-    
-    # Initialize a dictionary to store the weighted sum of parameters
-    global_state_dict = {key: torch.zeros_like(value) for key, value in global_model_state_dict.items()}
-
-    # Total number of samples across all clients
-    total_samples = sum(num_samples)
-
-    # Perform weighted aggregation of the client models
-    for state_dict, n in zip(models_state_dict, num_samples):        
-        # Update global model parameters with the weighted sum
-        for key in global_state_dict.keys():
-            global_state_dict[key] += state_dict[key] * (n / total_samples)
-    return global_state_dict
-
-
-
-
-
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-def sum_model_weights_pytorch(model):
-    return sum(p.sum().item() for p in model.parameters())
-
 
 def seed_every_thing(seed):
     random.seed(seed)
@@ -88,121 +41,98 @@ def seed_every_thing(seed):
     torch.use_deterministic_algorithms(True)  # Add this line
 
 
-
+def sum_model_weights_pytorch(model):
+    return sum(p.sum().item() for p in model.parameters())
 
 def sum_first_batch(dataloader):
-
     try:
         batch = next(iter(dataloader))
     except StopIteration:
-        raise ValueError("The DataLoader is empty. Cannot compute sum on an empty DataLoader.")
-    
+        raise ValueError(
+            "The DataLoader is empty. Cannot compute sum on an empty DataLoader.")
+
     # Check if the batch is a dictionary
     if isinstance(batch, dict):
         # Extract input tensors assuming they are under the key 'img'
         if "img" not in batch:
-            raise KeyError("The batch dictionary does not contain the key 'img'.")
+            raise KeyError(
+                "The batch dictionary does not contain the key 'img'.")
         inputs = batch["img"]
     else:
         # If the batch is a tuple or list, assume the first element is the input tensor
         inputs = batch[0]
-    
+
     # Compute the sum of all elements in the input tensor
     total_sum = torch.sum(inputs)
-    
+
     return total_sum.item()
 
+def fedavg_aggregate(models_state_dict, num_samples):
+    # Ensure the list of models and number of samples have the same length
+    assert len(models_state_dict) == len(
+        num_samples), "The number of models must match the number of sample counts"
+
+    # Initialize a model with the same architecture as the client models
+    global_model_state_dict = copy.deepcopy(models_state_dict[0])
+
+    # Initialize a dictionary to store the weighted sum of parameters
+    global_state_dict = {key: torch.zeros_like(
+        value) for key, value in global_model_state_dict.items()}
+
+    # Total number of samples across all clients
+    total_samples = sum(num_samples)
+
+    # Perform weighted aggregation of the client models
+    for state_dict, n in zip(models_state_dict, num_samples):
+        # Update global model parameters with the weighted sum
+        for key in global_state_dict.keys():
+            global_state_dict[key] += state_dict[key] * (n / total_samples)
+    return global_state_dict
+
+def _get_weights_from_cache(model_cache_dir, mname, model, channels):
+    cache = Index(model_cache_dir)
+    cache.clear()
+    key = f'{mname}-channels{channels}'
+    state_dict = cache.get(key)
+    if state_dict is None:
+        state_dict = model.state_dict()
+        cache[key] = state_dict
+    return state_dict
 
 
-# Define transforms for different dataset types
-transforms_dict = {
-    'rgb': transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ]),
-    'grayscale': transforms.Compose([
-        transforms.Resize((32,32)),
-        transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,))
-    ])
-}
-
-def get_federated_dataset(dataset_name, num_clients, partitioner_config='iid'):
-    if partitioner_config == 'iid':
-        partitioner = IidPartitioner(num_partitions=num_clients)
-        fds = FederatedDataset(dataset=dataset_name, partitioners={"train": partitioner})
-        
-        # Determine the appropriate transform based on the dataset
-        if dataset_name == "cifar10":
-            transform = transforms_dict['rgb']
-            img_col_name = 'img'
-        elif dataset_name == "mnist":
-            transform = transforms_dict['grayscale']
-            img_col_name = 'image'
-        else:
-            raise ValueError(f"Unsupported dataset: {dataset_name}")
-        
-        test_data = fds.load_split("test")
-        test_data = test_data.map(lambda img: {"img": transform(img)}, input_columns=img_col_name).with_format("torch")
-        
-        c2data = {}
-        for cid in range(num_clients):
-            temp_partition = fds.load_partition(cid)
-            torch_partition = temp_partition.map(lambda img: {"img": transform(img)}, input_columns=img_col_name).with_format("torch")
-            c2data[cid] = torch_partition
-        
-        return {'c2data': c2data, 'test_data': test_data}
-    else:
-        raise ValueError(f"Unknown partitioner config: {partitioner_config}")
-
-def get_cached_federated_dataset(dataset_name, num_clients, cache_path, partitioner_config='iid'):
-    dcache = Index(cache_path)
-    key = f"{dataset_name}_{num_clients}_{partitioner_config}"
-    
-    if key not in dcache:
-        dcache[key] = get_federated_dataset(dataset_name, num_clients, partitioner_config)
-    
-    return dcache[key]
+def set_parameters(net, parameters):
+    params_dict = zip(net.state_dict().keys(), parameters)
+    state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
+    net.load_state_dict(state_dict, strict=True)
 
 
-def get_dataset_for_framework(cfg):
-    seed_every_thing(cfg.seed)
-    
-    if cfg.framework == 'flower':
-        dataset_dict = get_cached_federated_dataset(
-            cfg.dataset, 
-            cfg.DATASET_DIVISION_CLIENTS, 
-            cfg.dataset_cache_path, 
-            cfg.data_distribution
+def get_parameters(net):
+    return [val.cpu().numpy() for _, val in net.state_dict().items()]
+
+
+def weighted_average(metrics):
+    accuracies = [num_examples * m["accuracy"] for num_examples, m in metrics]
+    examples = [num_examples for num_examples, _ in metrics]
+    return {"accuracy": sum(accuracies) / sum(examples)}
+
+
+
+def _fit_metrics_aggregation_fn(metrics):
+    """Aggregate metrics recieved from client."""
+    print(">>   ------------------- Clients Metrics ------------- ")
+    all_logs = {}
+    for nk_points, metric_d in metrics:
+        cid = metric_d["cid"]
+        temp_s = (
+            f' Client {metric_d["cid"]}, before_train: {metric_d["before_train"]}, "after_train":{metric_d["after_train"]}'
         )
+        all_logs[cid] = temp_s
 
-        def worker_init_fn(worker_id):
-            np.random.seed(cfg.seed + worker_id)
+    # sorted by client id from lowest to highest
+    for k in sorted(all_logs.keys()):
+        print(all_logs[k])
 
-        c2data = {
-            cid: DataLoader(
-                dset, 
-                batch_size=cfg.client_batch_size, 
-                shuffle=True, 
-                num_workers=0,
-                worker_init_fn=worker_init_fn
-            )
-            for cid, dset in dataset_dict['c2data'].items()
-        }
-
-        c2sum_first_batch = {c: sum_first_batch(b) for c, b in c2data.items() if c in list(range(cfg.num_clients))}
-
-        test_data = DataLoader(
-            dataset_dict['test_data'].select(range(cfg.max_test_data_size)), 
-            batch_size=cfg.server_batch_size, 
-            num_workers=0,
-            shuffle=False  # Ensure no shuffling in test loader
-        )
-
-        return {'test_data': test_data, 'c2data': c2data, 'batch_sum': c2sum_first_batch}
-    else:
-        raise ValueError(f"Unknown framework: {cfg.framework}")
-
+    return {"loss": 0.0, "accuracy": 0.0}
 
 
 
@@ -248,22 +178,109 @@ class LeNet(nn.Module):
         return x
 
 
-def _get_weights_from_cache(model_cache_dir, mname, model, channels):
-    cache = Index(model_cache_dir)
-    cache.clear()
-    key = f'{mname}-channels{channels}'
-    state_dict = cache.get(key)
-    if state_dict is None:
-        state_dict = model.state_dict()
-        cache[key] = state_dict
-    return state_dict
+
+
+# Define transforms for different dataset types
+transforms_dict = {
+    'rgb': transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ]),
+    'grayscale': transforms.Compose([
+        transforms.Resize((32, 32)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))
+    ])
+}
+
+
+def get_federated_dataset(dataset_name, num_clients, partitioner_config='iid'):
+    if partitioner_config == 'iid':
+        partitioner = IidPartitioner(num_partitions=num_clients)
+        fds = FederatedDataset(dataset=dataset_name, partitioners={
+                               "train": partitioner})
+
+        # Determine the appropriate transform based on the dataset
+        if dataset_name == "cifar10":
+            transform = transforms_dict['rgb']
+            img_col_name = 'img'
+        elif dataset_name == "mnist":
+            transform = transforms_dict['grayscale']
+            img_col_name = 'image'
+        else:
+            raise ValueError(f"Unsupported dataset: {dataset_name}")
+
+        test_data = fds.load_split("test")
+        test_data = test_data.map(lambda img: {"img": transform(
+            img)}, input_columns=img_col_name).with_format("torch")
+
+        c2data = {}
+        for cid in range(num_clients):
+            temp_partition = fds.load_partition(cid)
+            torch_partition = temp_partition.map(lambda img: {"img": transform(
+                img)}, input_columns=img_col_name).with_format("torch")
+            c2data[cid] = torch_partition
+
+        return {'c2data': c2data, 'test_data': test_data}
+    else:
+        raise ValueError(f"Unknown partitioner config: {partitioner_config}")
+
+
+def get_cached_federated_dataset(dataset_name, num_clients, cache_path, partitioner_config='iid'):
+    dcache = Index(cache_path)
+    key = f"{dataset_name}_{num_clients}_{partitioner_config}"
+
+    if key not in dcache:
+        dcache[key] = get_federated_dataset(
+            dataset_name, num_clients, partitioner_config)
+
+    return dcache[key]
+
+
+def get_dataset_for_framework(cfg):
+    seed_every_thing(cfg.seed)
+
+    if cfg.framework == 'flower':
+        dataset_dict = get_cached_federated_dataset(
+            cfg.dataset,
+            cfg.DATASET_DIVISION_CLIENTS,
+            cfg.dataset_cache_path,
+            cfg.data_distribution
+        )
+
+        def worker_init_fn(worker_id):
+            np.random.seed(cfg.seed + worker_id)
+
+        c2data = {
+            cid: DataLoader(
+                dset,
+                batch_size=cfg.client_batch_size,
+                shuffle=True,
+                num_workers=0,
+                worker_init_fn=worker_init_fn,
+                pin_memory=True
+            )
+            for cid, dset in dataset_dict['c2data'].items()
+        }
+
+        c2sum_first_batch = {c: sum_first_batch(
+            b) for c, b in c2data.items() if c in list(range(cfg.num_clients))}
+
+        test_data = DataLoader(
+            dataset_dict['test_data'].select(range(cfg.max_test_data_size)),
+            batch_size=cfg.server_batch_size,
+            num_workers=0,
+            shuffle=False,  # Ensure no shuffling in test loader
+            pin_memory=True
+        )
+        return {'test_data': test_data, 'c2data': c2data, 'batch_sum': c2sum_first_batch}
+    else:
+        raise ValueError(f"Unknown framework: {cfg.framework}")
 
 
 def get_pytorch_model(model_name, model_cache_dir, deterministic, channels, seed):
     seed_every_thing(seed)
-
     model_name2class = {'LeNet': LeNet}
-
     if deterministic is None or model_cache_dir is None or seed is None:
         raise ValueError(
             "model_cache_dir must be provided when deterministic is True/False. seed value is also required")
@@ -324,45 +341,6 @@ def test(net, testloader, device, loss_fn, **args):
     return loss, accuracy
 
 
-def set_parameters(net, parameters):
-    params_dict = zip(net.state_dict().keys(), parameters)
-    state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
-    net.load_state_dict(state_dict, strict=True)
-
-
-def get_parameters(net):
-    return [val.cpu().numpy() for _, val in net.state_dict().items()]
-
-
-
-
-
-def weighted_average(metrics):
-    accuracies = [num_examples * m["accuracy"] for num_examples, m in metrics]
-    examples = [num_examples for num_examples, _ in metrics]
-    return {"accuracy": sum(accuracies) / sum(examples)}
-
-
-def _fit_metrics_aggregation_fn(metrics):
-    """Aggregate metrics recieved from client."""
-    print(">>   ------------------- Clients Metrics ------------- ")
-    all_logs = {}
-    for nk_points, metric_d in metrics:
-        cid = metric_d["cid"]
-        temp_s = (
-            f' Client {metric_d["cid"]}, before_train: {metric_d["before_train"]}, "after_train":{metric_d["after_train"]}'
-        )
-        all_logs[cid] = temp_s
-
-    # sorted by client id from lowest to highest
-    for k in sorted(all_logs.keys()):
-        print(all_logs[k])
-    
-
-    return {"loss": 0.0, "accuracy": 0.0}
-# ###  client
-
-
 class FlowerClient(NumPyClient):
     def __init__(self, client_data, cfg, cid):
         seed_every_thing(cfg.seed)
@@ -387,9 +365,10 @@ class FlowerClient(NumPyClient):
         after_trining_ws = sum_model_weights_pytorch(self.net)
         print(
             f'--> cid {self.cid}, before training {before_trining_ws}, after train {after_trining_ws}')
-        
+
         temp_cache = Index(self.cfg.temp_cache_path)
-        temp_cache[f'cid_{self.cid}'] = (self.net.state_dict(), len(self.trainloader))
+        temp_cache[f'cid_{self.cid}'] = (
+            self.net.state_dict(), len(self.trainloader))
 
         return get_parameters(self.net), len(self.trainloader), {'cid': self.cid, 'before_train': before_trining_ws, 'after_train': after_trining_ws}
 
@@ -428,13 +407,15 @@ def run_flower_simulation(cfg):
 
         if server_round > 0:
             temp_cache = Index(cfg.temp_cache_path)
-            client_weights_nsamples = [temp_cache[f'cid_{i}'] for i in range(cfg.num_clients)]
+            client_weights_nsamples = [
+                temp_cache[f'cid_{i}'] for i in range(cfg.num_clients)]
             client_weights = [c[0] for c in client_weights_nsamples]
             client_nsamples = [c[1] for c in client_weights_nsamples]
-            gm_state_dict_temp  = fedavg_aggregate(client_weights, client_nsamples)
+            gm_state_dict_temp = fedavg_aggregate(
+                client_weights, client_nsamples)
             net.load_state_dict(gm_state_dict_temp)
 
-            own_implmentation_sum_of_weights =  sum_model_weights_pytorch(net)
+            own_implmentation_sum_of_weights = sum_model_weights_pytorch(net)
 
         return loss, {"accuracy": accuracy}
 
