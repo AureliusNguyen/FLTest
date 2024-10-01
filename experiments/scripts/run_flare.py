@@ -1,46 +1,32 @@
-# experiments/scripts/run_flare.py
-
+from diskcache import Index
 import hydra
-from omegaconf import DictConfig
-from fl_testing.frameworks.nvidia_flare.server import create_flare_job, run_server
-from fl_testing.models.pytorch.lenet import LeNet
-from nvflare.app_opt.pt.job_config.fed_avg import FedAvgJob
-from nvflare.job_config.script_runner import ScriptRunner
-
-# Import the SimpleNetwork model
-from fl_testing.models.pytorch.lenet import LeNet
-
-import sys
-
-
-sys.path.append('/home/gulzar/Github/fl_frameworks_testing/')
-
-@hydra.main(config_path="../../fl_testing/config", config_name="config")
-def main(cfg: DictConfig):
-    n_clients = cfg.experiment.num_clients
-    num_rounds = cfg.experiment.num_rounds
-    initial_model = LeNet()
-
-    train_script = "/home/gulzar/Github/fl_frameworks_testing/fl_testing/federated/nvidia_flare/client.py"
+from fl_testing.frameworks.nvidia_flare.server import run_simulation
+from fl_testing.frameworks.utils  import seed_every_thing
 
 
 
-    job = FedAvgJob(
-        name="jill_hello_fl", n_clients=n_clients, num_rounds=num_rounds, initial_model=LeNet()
-    )
 
-    # Add clients
-    for i in range(n_clients):
-        executor = ScriptRunner(
-            script=train_script, script_args=""  # f"--batch_size 32 --data_path /tmp/data/site-{i}"
-        )
-        job.to(executor, f"site-{i+1}")
 
-    # job.export_job("/tmp/nvflare/jobs/job_config")
-    # job.simulator_run("/tmp/nvflare/jobs/workdir", gpu="0")
-    job.simulator_run("temp1", gpu="0")
+@hydra.main(config_path="../config", config_name="config")
+def main(cfg):
+    seed_every_thing(cfg.seed)
+    key = f"{cfg.exp_name}-{cfg.framework}"
+
+    current_result =  run_simulation(cfg)
+    cache = Index(cfg.framework_cache_path)
+    prev_result = cache.get(key)
+
+    cache[key] = current_result 
+
+
+    if prev_result is not None:
+        for k in current_result.keys():
+            print(f'{k} -> prev {prev_result[k]}, current {current_result[k]}')
+        
+        for k in current_result.keys():
+            assert current_result[k] == prev_result[k], f"For {k}, Prev : {prev_result[k]}, Current: {current_result[k]}"
+            print(f'{k} Passed' )
 
     
-
 if __name__ == "__main__":
     main()

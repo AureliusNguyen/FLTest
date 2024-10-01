@@ -2,9 +2,9 @@
 
 from flwr.client import NumPyClient
 from fl_testing.models.pytorch.models import get_pytorch_model
-from fl_testing.frameworks.flower.utils import set_parameters, get_parameters, train, test
+from fl_testing.frameworks.flower.utils import set_parameters, get_parameters
 from fl_testing.frameworks.utils import seed_every_thing
-from fl_testing.frameworks.utils import sum_model_weights_pytorch
+from fl_testing.frameworks.utils import sum_model_weights_pytorch, train, test
 
 
 class FlowerClient(NumPyClient):

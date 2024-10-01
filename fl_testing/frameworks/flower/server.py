@@ -6,8 +6,8 @@ from flwr.client import ClientApp
 from fl_testing.frameworks.flower.client import FlowerClient
 from fl_testing.data_preprocessing.pytorch_fl_dataset import get_dataset_for_framework
 from fl_testing.models.pytorch.models import get_pytorch_model
-from fl_testing.frameworks.flower.utils import set_parameters, test
-from fl_testing.frameworks.utils import sum_model_weights_pytorch
+from fl_testing.frameworks.flower.utils import set_parameters
+from fl_testing.frameworks.utils import sum_model_weights_pytorch, test
 
 from fl_testing.frameworks.utils  import seed_every_thing
 

@@ -1,89 +1,86 @@
-# fl_testing/federated/nvidia_flare/client.py
-import sys
+import argparse
 import os
 import torch
-from torch import nn
-from torch.optim import SGD
 
+# Import NVFlare client API
 import nvflare.client as flare
 from nvflare.client.tracking import SummaryWriter
-import sys
-sys.path.append('/home/gulzar/Github/fl_frameworks_testing/')
+from diskcache import Index
 
-
-
-# Import the SimpleNetwork model from the new location
-from fl_testing.models.pytorch.lenet import LeNet
-
-
-from fl_testing.frameworks.utils import LOSS_FUNCTIONS_PyTorch
+from fl_testing.models.pytorch.models import get_pytorch_model
+from fl_testing.frameworks.utils import train, test
 
 
 def main():
-    batch_size = 4
-    epochs = 5
-    lr = 0.01
-    model = LeNet()
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    loss_fn = LOSS_FUNCTIONS_PyTorch['CrossEntropyLoss']() # --> Fix this to dynamically get the loss function
-    optimizer = SGD(model.parameters(), lr=lr, momentum=0.9)
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="NVFlare CIFAR-10 Client")
+    parser.add_argument('--client_id', type=int, required=True, help='Unique ID for the client')
+    parser.add_argument('--cache_path', type=str, required=True, help='Path to the config cache')
+    args = parser.parse_args()
+    client_id = args.client_id
 
+
+    cache = Index(args.cache_path)
+
+    cfg = cache['flare_cfg']
+    dataset_dict = cache['flare_dataset_dict']
+
+
+    cl_dataset = dataset_dict['c2data'][client_id]
+
+    trainloader = torch.utils.data.DataLoader(cl_dataset, batch_size=cfg.client_batch_size, shuffle=True, num_workers=0, pin_memory=True)
+    testloader = torch.utils.data.DataLoader(dataset_dict['test_data'].select(range(cfg.max_test_data_size)), batch_size=cfg.server_batch_size, num_workers=0, pin_memory=True)
+
+
+    
+
+    # Initialize NVFlare client API
     flare.init()
-    sys_info = flare.system_info()
-    client_name = sys_info["site_name"]
 
-    # Get the DataLoader from the data loader module
-    train_loader = get_cifar10_train_loader(
-        client_name=client_name,
-        batch_size=batch_size,
-        shuffle=True,
-        data_root="data/raw/cifar10/",  # Adjust the path as needed
-        download=True,
-    )
-
+    # Initialize SummaryWriter for TensorBoard metrics
     summary_writer = SummaryWriter()
+
+    
+
+    # Initialize the network
+    net = get_pytorch_model(cfg.model_name, cfg.model_cache_path, deterministic=cfg.deterministic, channels=cfg.channels,  seed=cfg.seed)
+
+    # Training parameters
+    epochs = cfg.client_epochs
+
+    
     while flare.is_running():
+        # Receive the global model from the server
         input_model = flare.receive()
-        print(f"current_round={input_model.current_round}")
+        print(f"Client {client_id} - Received model for Round {input_model.current_round}")
 
-        model.load_state_dict(input_model.params)
-        model.to(device)
+        # Load the received global model weights
+        net.load_state_dict(input_model.params)
+        net.train()
 
-        steps = epochs * len(train_loader)
-        for epoch in range(epochs):
-            running_loss = 0.0
-            for i, batch in enumerate(train_loader):
-                images, labels = batch[0].to(device), batch[1].to(device)
-                optimizer.zero_grad()
+        # Perform local training
+        net, avg_loss = train(net, trainloader, epochs, cfg.device, cfg.loss_fn, cfg.optimizer, seed=cfg.seed)
+        print(f"Client {client_id} - Average Loss: {avg_loss:.3f}")
 
-                predictions = model(images)
-                cost = loss_fn(predictions, labels)
-                cost.backward()
-                optimizer.step()
+        # Log training loss
+        global_step = input_model.current_round * epochs * len(trainloader)
+        summary_writer.add_scalar(tag="loss_per_round", scalar=avg_loss, global_step=global_step)
 
-                running_loss += cost.item()
-                if i % 3000 == 0 and i > 0:
-                    avg_loss = running_loss / 3000
-                    print(f"Epoch: {epoch}/{epochs}, Iteration: {i}, Loss: {avg_loss}")
-                    global_step = (
-                        input_model.current_round * steps + epoch * len(train_loader) + i
-                    )
-                    summary_writer.add_scalar(
-                        tag="loss_for_each_batch",
-                        scalar_value=avg_loss,
-                        global_step=global_step,
-                        scalar=running_loss,
-                    )
-                    running_loss = 0.0
+        # Evaluate the model
+        accuracy = test(net, testloader, cfg.device, cfg.loss_fn, seed=cfg.seed)[1] * 100
+        summary_writer.add_scalar(tag="model_accuracy", scalar=accuracy, global_step=input_model.current_round)
 
-        print("Finished Training")
-
+        # Prepare the updated model to send back to the server
         output_model = flare.FLModel(
-            params=model.cpu().state_dict(),
-            meta={"NUM_STEPS_CURRENT_ROUND": steps},
+            params=net.cpu().state_dict(),
+            metrics={"accuracy": accuracy},
+            meta={"NUM_STEPS_CURRENT_ROUND": epochs * len(trainloader)}
         )
 
+        # Send the updated model back to the server
         flare.send(output_model)
+        print(f"Client {client_id} - Sent updated model with Accuracy: {accuracy}%")
+
 
 
 if __name__ == "__main__":

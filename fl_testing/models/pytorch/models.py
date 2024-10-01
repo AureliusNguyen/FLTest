@@ -11,7 +11,7 @@ First we check if the model is already in the cache, if not we download/randomly
 """
 
 class LeNet(nn.Module):
-    def __init__(self, channels, num_classes=10):
+    def __init__(self, channels=1, num_classes=10):
         """
         Initialize the LeNet model.
 
