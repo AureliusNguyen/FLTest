@@ -48,7 +48,6 @@ def train(net, trainloader, epochs, device, loss_fn, opitmzer_name, **args):
 
 
 def test(net, testloader, device, loss_fn, **args):
-    seed_every_thing(args['seed'])
     criterion = LOSS_FUNCTIONS_PyTorch[loss_fn]()
     correct, total, loss = 0, 0, 0.0
     net.eval()

@@ -47,5 +47,5 @@ server_batch_size: 512
 
 temp_cache_path: /home/gulzar/Github/fl_frameworks_testing/data/temp_cache
 
-flare_dir_path: /home/gulzar/Github/fl_frameworks_testing/data/flare_working
+flare_dir_path: /home/gulzar/Github/fl_frameworks_testing/data/flare_working/temp
 flare_client_script_path: /home/gulzar/Github/fl_frameworks_testing/fl_testing/frameworks/nvidia_flare/client.py
