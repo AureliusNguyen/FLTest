@@ -7,8 +7,8 @@ import nvflare.client as flare
 from nvflare.client.tracking import SummaryWriter
 from diskcache import Index
 
-from fl_testing.frameworks.models import get_pytorch_model
-from fl_testing.frameworks.utils import train, test, seed_every_thing
+from fl_testing.frameworks.models import get_pytorch_model, train, test
+from fl_testing.frameworks.utils import  seed_every_thing
 os.environ['PYTHONHASHSEED'] = '786'
 
 seed_every_thing(786)
@@ -66,7 +66,7 @@ def main(args):
             tag="loss_per_round", scalar=avg_loss, global_step=global_step)
 
         # Evaluate the model
-        accuracy = test(net, testloader, cfg.device,
+        loss, accuracy = test(net, testloader, cfg.device,
                         cfg.loss_fn, seed=cfg.seed)[1] * 100
         summary_writer.add_scalar(
             tag="model_accuracy", scalar=accuracy, global_step=input_model.current_round)

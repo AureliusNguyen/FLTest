@@ -1,23 +1,21 @@
-from nvflare.app_common.workflows.fedavg import FedAvg
-from nvflare.app_opt.pt.job_config.base_fed_job import BaseFedJob
-from nvflare.job_config.script_runner import ScriptRunner
-from diskcache import Index
 import os
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from fl_testing.frameworks.models import get_pytorch_model
+from nvflare.app_common.workflows.fedavg import FedAvg
+from nvflare.app_opt.pt.job_config.base_fed_job import BaseFedJob
+from nvflare.job_config.script_runner import ScriptRunner
+from diskcache import Index
+
+
+from fl_testing.frameworks.models import get_pytorch_model,test, sum_model_weights_pytorch
 from fl_testing.frameworks.pytorch_fl_dataset import get_dataset_for_framework
-from fl_testing.frameworks.utils import test, sum_model_weights_pytorch, seed_every_thing
+from fl_testing.frameworks.utils import seed_every_thing
 
 
 os.environ['PYTHONHASHSEED'] = '786'
 seed_every_thing(786)
-
-
-
-
 
 
 class TestFedAvg(FedAvg):
@@ -74,6 +72,14 @@ class TestFedAvg(FedAvg):
     
 
 def run_simulation(cfg):
+    dir_path = '/home/gulzar/Github/fl_frameworks_testing/data/flare_working/temp'
+
+    # clear the directory before running the simulation
+    os.system(f'rm -rf {dir_path}')
+    os.system(f'mkdir -p {dir_path}')
+
+    
+
     seed_every_thing(cfg.seed)
     # Define job parameters
     job_name = "cifar10_pt_fedavg"

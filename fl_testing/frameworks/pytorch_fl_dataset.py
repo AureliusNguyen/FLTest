@@ -112,5 +112,13 @@ def get_dataset_for_framework(cfg):
             pin_memory=True
         )
         return {'test_data': test_data, 'c2data': c2data, 'batch_sum': c2sum_first_batch}
+    elif cfg.framework == 'flare':
+        dataset_dict = get_cached_federated_dataset(
+            cfg.dataset,
+            cfg.DATASET_DIVISION_CLIENTS,
+            cfg.dataset_cache_path,
+            cfg.data_distribution
+        )
+        return dataset_dict
     else:
         raise ValueError(f"Unknown framework: {cfg.framework}")

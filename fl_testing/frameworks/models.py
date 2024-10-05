@@ -16,7 +16,7 @@ OPTIMIZER_PyTorch = {
 
 
 class LeNet(nn.Module):
-    def __init__(self, channels, num_classes=10):
+    def __init__(self, channels=1, num_classes=10):
         """
         Initialize the LeNet model.
 
@@ -119,6 +119,7 @@ def train(net, trainloader, epochs, device, loss_fn, opitmzer_name, **args):
 
         # if verbose:
         #     print(f"Epoch {epoch+1}: train loss {epoch_loss}, accuracy {epoch_acc}")
+    return net, epoch_loss.item()
 
 
 def test(net, testloader, device, loss_fn, **args):
@@ -137,13 +138,3 @@ def test(net, testloader, device, loss_fn, **args):
     loss /= len(testloader.dataset)
     accuracy = correct / total
     return loss, accuracy
-
-    
-
-        
-
-
-
-
-
-
