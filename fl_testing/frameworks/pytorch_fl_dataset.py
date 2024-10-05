@@ -5,12 +5,10 @@ from diskcache import Index
 from torch.utils.data import DataLoader
 from fl_testing.frameworks.utils import seed_every_thing
 
-
+import numpy as np
 import torch
 
-
 def sum_first_batch(dataloader):
-
     try:
         batch = next(iter(dataloader))
     except StopIteration:
@@ -32,20 +30,6 @@ def sum_first_batch(dataloader):
     total_sum = torch.sum(inputs)
 
     return total_sum.item()
-
-
-# Define transforms for different dataset types
-transforms_dict = {
-    'rgb': transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ]),
-    'grayscale': transforms.Compose([
-        transforms.Resize((32, 32)),
-        transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,))
-    ])
-}
 
 
 def get_federated_dataset(dataset_name, num_clients, partitioner_config='iid'):
@@ -92,9 +76,6 @@ def get_cached_federated_dataset(dataset_name, num_clients, cache_path, partitio
 
 
 def get_dataset_for_framework(cfg):
-    # generator = torch.Generator()
-    # generator.manual_seed(cfg.seed)
-
     seed_every_thing(cfg.seed)
 
     if cfg.framework == 'flower':
@@ -105,26 +86,31 @@ def get_dataset_for_framework(cfg):
             cfg.data_distribution
         )
 
-        c2data = {cid: DataLoader(dset, batch_size=cfg.client_batch_size, shuffle=True, num_workers=0, pin_memory=True)
-                  for cid, dset in dataset_dict['c2data'].items()}
+        def worker_init_fn(worker_id):
+            np.random.seed(cfg.seed + worker_id)
+
+        c2data = {
+            cid: DataLoader(
+                dset,
+                batch_size=cfg.client_batch_size,
+                shuffle=True,
+                num_workers=0,
+                worker_init_fn=worker_init_fn,
+                pin_memory=True
+            )
+            for cid, dset in dataset_dict['c2data'].items()
+        }
 
         c2sum_first_batch = {c: sum_first_batch(
-            b)for c, b in c2data.items() if c in list(range(cfg.num_clients))}
+            b) for c, b in c2data.items() if c in list(range(cfg.num_clients))}
 
         test_data = DataLoader(
             dataset_dict['test_data'].select(range(cfg.max_test_data_size)),
-            batch_size=cfg.server_batch_size, num_workers=0, pin_memory=True
+            batch_size=cfg.server_batch_size,
+            num_workers=0,
+            shuffle=False,  # Ensure no shuffling in test loader
+            pin_memory=True
         )
-
         return {'test_data': test_data, 'c2data': c2data, 'batch_sum': c2sum_first_batch}
-
-    elif cfg.framework == 'flare':
-        dataset_dict = get_cached_federated_dataset(
-            cfg.dataset,
-            cfg.DATASET_DIVISION_CLIENTS,
-            cfg.dataset_cache_path,
-            cfg.data_distribution
-        )
-        return dataset_dict
     else:
         raise ValueError(f"Unknown framework: {cfg.framework}")

@@ -38,3 +38,8 @@ priority = "supplemental"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+
+[tool.flake8]
+ignore = ["D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107"]
+max-line-length = 88
+exclude = ["venv", "__pycache__"]

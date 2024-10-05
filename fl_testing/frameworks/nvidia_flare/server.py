@@ -1,18 +1,28 @@
 from nvflare.app_common.workflows.fedavg import FedAvg
 from nvflare.app_opt.pt.job_config.base_fed_job import BaseFedJob
 from nvflare.job_config.script_runner import ScriptRunner
-
-from fl_testing.models.pytorch.models import get_pytorch_model
-from fl_testing.data_preprocessing.pytorch_fl_dataset import get_dataset_for_framework
-from fl_testing.frameworks.utils import test, sum_model_weights_pytorch
 from diskcache import Index
-import torch
-from torch.utils.data import DataLoader
 import os
 import numpy as np
+import torch
+from torch.utils.data import DataLoader
+
+from fl_testing.frameworks.models import get_pytorch_model
+from fl_testing.frameworks.pytorch_fl_dataset import get_dataset_for_framework
+from fl_testing.frameworks.utils import test, sum_model_weights_pytorch, seed_every_thing
+
+
+os.environ['PYTHONHASHSEED'] = '786'
+seed_every_thing(786)
+
+
+
+
+
 
 class TestFedAvg(FedAvg):
     def run(self):
+        seed_every_thing(786)
         self.info("Start FedAvg.")
 
         model = self.load_model()
@@ -64,6 +74,7 @@ class TestFedAvg(FedAvg):
     
 
 def run_simulation(cfg):
+    seed_every_thing(cfg.seed)
     # Define job parameters
     job_name = "cifar10_pt_fedavg"
 

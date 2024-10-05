@@ -2,10 +2,8 @@ from diskcache import Index
 import hydra
 from fl_testing.frameworks.nvidia_flare.server import run_simulation
 from fl_testing.frameworks.utils  import seed_every_thing
-
-
-
-
+import os
+os.environ['PYTHONHASHSEED'] = '786'
 
 @hydra.main(config_path="../config", config_name="config")
 def main(cfg):

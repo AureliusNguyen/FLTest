@@ -1,68 +1,8 @@
 # utils/loss_functions.py
-import torch.nn as nn
 import torch
 import numpy as np
 import random
-
-LOSS_FUNCTIONS_PyTorch = {
-    'CrossEntropyLoss': nn.CrossEntropyLoss,    
-}
-
-OPTIMIZER_PyTorch = {
-    'Adam': torch.optim.Adam
-}
-
-
-def sum_model_weights_pytorch(model):
-    return sum(p.sum().item() for p in model.parameters())
-
-
-
-def train(net, trainloader, epochs, device, loss_fn, opitmzer_name, **args):
-    seed_every_thing(seed=args['seed'])    
-    
-    criterion = LOSS_FUNCTIONS_PyTorch[loss_fn]()
-    optimizer = OPTIMIZER_PyTorch[opitmzer_name](net.parameters())
-    net.train()
-    for epoch in range(epochs):
-        correct, total, epoch_loss = 0, 0, 0.0
-        for batch in trainloader:
-            images, labels = batch["img"].to(device), batch["label"].to(device)
-            optimizer.zero_grad()
-            outputs = net(images)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-            epoch_loss += loss
-            total += labels.size(0)
-            correct += (torch.max(outputs.data, 1)[1] == labels).sum().item()
-            break 
-        epoch_loss /= len(trainloader.dataset)
-        epoch_acc = correct / total
-
-            
-        # if verbose:
-        #     print(f"Epoch {epoch+1}: train loss {epoch_loss}, accuracy {epoch_acc}")
-        return net, epoch_loss.item()
-
-
-
-def test(net, testloader, device, loss_fn, **args):
-    criterion = LOSS_FUNCTIONS_PyTorch[loss_fn]()
-    correct, total, loss = 0, 0, 0.0
-    net.eval()
-    with torch.no_grad():
-        for batch in testloader:
-            images, labels = batch["img"].to(device), batch["label"].to(device)
-            outputs = net(images)
-            loss += criterion(outputs, labels).item()
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-    loss /= len(testloader.dataset)
-    accuracy = correct / total
-    return loss, accuracy
-
+import copy
 
 
 
@@ -78,4 +18,24 @@ def seed_every_thing(seed):
 
 
 
+def fedavg_aggregate(models_state_dict, num_samples):
+    # Ensure the list of models and number of samples have the same length
+    assert len(models_state_dict) == len(
+        num_samples), "The number of models must match the number of sample counts"
 
+    # Initialize a model with the same architecture as the client models
+    global_model_state_dict = copy.deepcopy(models_state_dict[0])
+
+    # Initialize a dictionary to store the weighted sum of parameters
+    global_state_dict = {key: torch.zeros_like(
+        value) for key, value in global_model_state_dict.items()}
+
+    # Total number of samples across all clients
+    total_samples = sum(num_samples)
+
+    # Perform weighted aggregation of the client models
+    for state_dict, n in zip(models_state_dict, num_samples):
+        # Update global model parameters with the weighted sum
+        for key in global_state_dict.keys():
+            global_state_dict[key] += state_dict[key] * (n / total_samples)
+    return global_state_dict

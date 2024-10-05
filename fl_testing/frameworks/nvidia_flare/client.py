@@ -7,11 +7,16 @@ import nvflare.client as flare
 from nvflare.client.tracking import SummaryWriter
 from diskcache import Index
 
-from fl_testing.models.pytorch.models import get_pytorch_model
-from fl_testing.frameworks.utils import train, test
+from fl_testing.frameworks.models import get_pytorch_model
+from fl_testing.frameworks.utils import train, test, seed_every_thing
+os.environ['PYTHONHASHSEED'] = '786'
+
+seed_every_thing(786)
+
 
 
 def main(args):
+    seed_every_thing(786)
     client_id = args.client_id
 
     cache = Index(args.cache_path)
@@ -41,6 +46,7 @@ def main(args):
 
     while flare.is_running():
         # Receive the global model from the server
+        seed_every_thing(786)
         input_model = flare.receive()
         print(
             f"Client {client_id} - Received model for Round {input_model.current_round}")
