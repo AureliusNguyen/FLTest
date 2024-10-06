@@ -21,7 +21,7 @@ def run_fl_simulation(cfg):
     seed_every_thing(cfg.seed)
     key = f"{cfg.exp_name}-{cfg.framework}"
     current_result = FRAMEWORK2SIMULATION[cfg.framework](cfg)
-    cache = Index(cfg.framework_cache_path)
+    cache = Index(cfg.fw_cache_path)
     prev_result = cache.get(key)
     cache[key] = current_result
     return prev_result, current_result

@@ -76,7 +76,7 @@ def main(args):
             meta={"NUM_STEPS_CURRENT_ROUND": epochs * len(trainloader)}
         )
 
-        temp_cache = Index(cfg.temp_cache_path)
+        temp_cache = Index(cfg.fw_cache_path)
         temp_cache[f'cid_{args.client_id}'] = (net.state_dict(), len(trainloader))
         
         # Send the updated model back to the server

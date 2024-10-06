@@ -23,7 +23,7 @@ def get_cfg(request):
         config.framework = request.param
     return config
 
-def test_run_fl_simulation(get_cfg):
+def test_single_round_base(get_cfg):
     cfg = get_cfg
     os.environ['PYTHONHASHSEED'] = '786'
     # Run the run_fl_simulation function with the actual config
@@ -31,7 +31,7 @@ def test_run_fl_simulation(get_cfg):
     current_result = FRAMEWORK2SIMULATION[cfg.framework](cfg)
 
     # Verify that results are cached
-    cache = Index(cfg.framework_cache_path)
+    cache = Index(cfg.fw_cache_path)
     key = f"{cfg.exp_name}-{cfg.framework}"
     prev_result = cache.get(key)
     cache[key] = current_result

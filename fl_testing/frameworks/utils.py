@@ -40,7 +40,7 @@ def fedavg_aggregate(models_state_dict, num_samples):
 def test_case_own_gm_model_summation(cfg):
     net = get_pytorch_model(cfg.model_name, cfg.model_cache_path,
                                 deterministic=cfg.deterministic, channels=cfg.channels,  seed=cfg.seed)  
-    temp_cache = Index(cfg.temp_cache_path)
+    temp_cache = Index(cfg.fw_cache_path)
     client_weights_nsamples = [
         temp_cache[f'cid_{i}'] for i in range(cfg.num_clients)]
     client_weights = [c[0] for c in client_weights_nsamples]

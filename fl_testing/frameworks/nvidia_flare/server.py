@@ -83,13 +83,13 @@ def run_flare_simulation(cfg):
 
     # Prepare the dataset and cache it
     dataset_dict = get_dataset_for_framework(cfg)
-    cache = Index(cfg.temp_cache_path)
+    cache = Index(cfg.fw_cache_path)
     cache['flare_dataset_dict'] = dataset_dict
     cache['flare_cfg'] = cfg
     num_clients = cfg.num_clients  # Adjust based on the number of clients
     num_rounds = cfg.num_rounds
 
-    os.environ['TEMP_CACHE_PATH'] = cfg.temp_cache_path
+    os.environ['TEMP_CACHE_PATH'] = cfg.fw_cache_path
 
     # Define the FedAvg controller with cfg passed
     controller = TestFedAvg(
@@ -116,7 +116,7 @@ def run_flare_simulation(cfg):
     for client_id in range(num_clients):
         runner = ScriptRunner(
             script=cfg.flare_client_script_path,
-            script_args=f"--client_id {client_id} --cache_path {cfg.temp_cache_path}",
+            script_args=f"--client_id {client_id} --cache_path {cfg.fw_cache_path}",
         )
         job.to(runner, f"site-{client_id}")
 

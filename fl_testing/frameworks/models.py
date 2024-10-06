@@ -1,8 +1,6 @@
 import torch
-
 import torch.nn as nn
 import torch.nn.functional as F
-#from fl_testing.frameworks.utils  import seed_every_thing
 from diskcache import Index
 
 
@@ -13,7 +11,6 @@ LOSS_FUNCTIONS_PyTorch = {
 OPTIMIZER_PyTorch = {
     'Adam': torch.optim.Adam
 }
-
 
 class LeNet(nn.Module):
     def __init__(self, channels=1, num_classes=10):
@@ -57,15 +54,12 @@ class LeNet(nn.Module):
         return x
 
 
-
 def sum_model_weights_pytorch(model):
     return sum(p.sum().item() for p in model.parameters())
 
 
-
 def _get_weights_from_cache(model_cache_dir, mname, model, channels):
     cache = Index(model_cache_dir)
-    cache.clear()
     key = f'{mname}-channels{channels}'
     state_dict = cache.get(key)
     if state_dict is None:
@@ -74,9 +68,8 @@ def _get_weights_from_cache(model_cache_dir, mname, model, channels):
     return state_dict
 
 
-
 def get_pytorch_model(model_name, model_cache_dir, deterministic, channels, seed):
-    #seed_every_thing(seed)
+    # seed_every_thing(seed)
     model_name2class = {'LeNet': LeNet}
     if deterministic is None or model_cache_dir is None or seed is None:
         raise ValueError(
@@ -94,10 +87,8 @@ def get_pytorch_model(model_name, model_cache_dir, deterministic, channels, seed
     return model
 
 
-
-
 def train(net, trainloader, epochs, device, loss_fn, opitmzer_name, **args):
-    #seed_every_thing(seed=args['seed'])
+    # seed_every_thing(seed=args['seed'])
     criterion = LOSS_FUNCTIONS_PyTorch[loss_fn]()
     optimizer = OPTIMIZER_PyTorch[opitmzer_name](net.parameters())
     net.train()
@@ -113,7 +104,6 @@ def train(net, trainloader, epochs, device, loss_fn, opitmzer_name, **args):
             epoch_loss += loss
             total += labels.size(0)
             correct += (torch.max(outputs.data, 1)[1] == labels).sum().item()
-            break
         epoch_loss /= len(trainloader.dataset)
         epoch_acc = correct / total
 
@@ -123,7 +113,7 @@ def train(net, trainloader, epochs, device, loss_fn, opitmzer_name, **args):
 
 
 def test(net, testloader, device, loss_fn, **args):
-    #seed_every_thing(args['seed'])
+    # seed_every_thing(args['seed'])
     criterion = LOSS_FUNCTIONS_PyTorch[loss_fn]()
     correct, total, loss = 0, 0, 0.0
     net.eval()

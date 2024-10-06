@@ -35,7 +35,7 @@ class FlowerClient(NumPyClient):
         print(
             f'--> cid {self.cid}, before training {before_trining_ws}, after train {after_trining_ws}')
 
-        temp_cache = Index(self.cfg.temp_cache_path)
+        temp_cache = Index(self.cfg.fw_cache_path)
         temp_cache[f'cid_{self.cid}'] = (
             self.net.state_dict(), len(self.trainloader))
 
