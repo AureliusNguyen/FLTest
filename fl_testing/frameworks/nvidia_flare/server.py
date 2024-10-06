@@ -15,6 +15,7 @@ from fl_testing.frameworks.utils import seed_every_thing, test_case_own_gm_model
 
 
 os.environ['PYTHONHASHSEED'] = '786'
+
 seed_every_thing(786)
 
 

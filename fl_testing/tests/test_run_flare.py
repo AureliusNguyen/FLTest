@@ -3,16 +3,18 @@ from diskcache import Index
 from fl_testing.frameworks.utils import seed_every_thing
 from fl_testing.frameworks.nvidia_flare.server import run_flare_simulation
 from fl_testing.frameworks.flower.server import run_flower_simulation
+from fl_testing.frameworks.apple_pfl.server import run_pfl_simulation
 import os
 import hydra
 
 # Dictionary to map frameworks to their respective simulation functions
 FRAMEWORK2SIMULATION = {
     "flower": run_flower_simulation,
-    "flare": run_flare_simulation
+    "flare": run_flare_simulation,
+    "pfl": run_pfl_simulation
 }
 
-@pytest.fixture(params=["flower", "flare"])
+@pytest.fixture(params=["flower", "flare", "pfl"])
 def get_cfg(request):
     # Assuming you have a configuration file that can be loaded directly
     # Adjust the path accordingly if different
@@ -44,5 +46,3 @@ def test_run_fl_simulation(get_cfg):
             assert v == prev_result[k], f"For {k}, Prev: {prev_result[k]}, Current: {v}"
             print(f'{k} Passed')
 
-# Run this test with pytest by simply using the command: pytest <name_of_test_file>.py
-# Ensure the PYTHONPATH is correctly set so that pytest can find the relevant modules.
