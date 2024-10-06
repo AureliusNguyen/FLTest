@@ -11,7 +11,7 @@ from fl_testing.frameworks.models import get_pytorch_model, sum_model_weights_py
 from fl_testing.frameworks.flower.utils import set_parameters, get_parameters
 
 
-from fl_testing.frameworks.utils  import seed_every_thing, fedavg_aggregate
+from fl_testing.frameworks.utils  import seed_every_thing, test_case_own_gm_model_summation, get_final_round_results
 from flwr.common import ndarrays_to_parameters
 
 
@@ -66,16 +66,7 @@ def run_flower_simulation(cfg):
         sum_of_weights = sum_model_weights_pytorch(net)
 
         if server_round > 0:
-            temp_cache = Index(cfg.temp_cache_path)
-            client_weights_nsamples = [
-                temp_cache[f'cid_{i}'] for i in range(cfg.num_clients)]
-            client_weights = [c[0] for c in client_weights_nsamples]
-            client_nsamples = [c[1] for c in client_weights_nsamples]
-            gm_state_dict_temp = fedavg_aggregate(
-                client_weights, client_nsamples)
-            net.load_state_dict(gm_state_dict_temp)
-
-            own_implmentation_sum_of_weights = sum_model_weights_pytorch(net)
+          own_implmentation_sum_of_weights  = test_case_own_gm_model_summation(cfg)
 
         return loss, {"accuracy": accuracy}
 
@@ -132,6 +123,6 @@ def run_flower_simulation(cfg):
         num_supernodes=cfg.num_clients,
         backend_config=backend_config,
     )
-
-    return {'c2batch_sum': c2batch_sum, 'final_round_loss': final_round_loss, 'final_round_accuracy': final_round_accuracy, 'own_implmentation_sum_of_weights': own_implmentation_sum_of_weights, 'sum_of_weights': sum_of_weights, }
+    result = get_final_round_results(final_round_loss, final_round_accuracy, pytorch_gm_sum=own_implmentation_sum_of_weights, framework_gm_sum=sum_of_weights)    
+    return result
 

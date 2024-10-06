@@ -2,7 +2,7 @@ import torch
 
 import torch.nn as nn
 import torch.nn.functional as F
-from fl_testing.frameworks.utils  import seed_every_thing
+#from fl_testing.frameworks.utils  import seed_every_thing
 from diskcache import Index
 
 

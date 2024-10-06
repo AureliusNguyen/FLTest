@@ -1,16 +1,14 @@
 import torch
 from pfl.model.pytorch import PyTorchModel
-from pfl.metrics import  Weighted
+from pfl.metrics import Weighted
+
+from fl_testing.frameworks.models import get_pytorch_model, LOSS_FUNCTIONS_PyTorch, OPTIMIZER_PyTorch
 
 
-from fl_testing.models.pytorch.lenet import LeNet
-from fl_testing.frameworks.utils import LOSS_FUNCTIONS_PyTorch
-
-
-
-def get_pfl_pytorch_model(loss_fn):
-    pytorch_model = LeNet(channels=3)
-    loss_fn = LOSS_FUNCTIONS_PyTorch[loss_fn]()
+def get_pfl_pytorch_model(cfg):
+    pytorch_model = get_pytorch_model(cfg.model_name, model_cache_dir=cfg.model_cache_path,
+                                      deterministic=cfg.deterministic, channels=cfg.channels, seed=cfg.seed).to(cfg.device)
+    loss_fn = LOSS_FUNCTIONS_PyTorch[cfg.loss_fn]()
 
     def loss(inputs, targets, eval=False):
         return loss_fn(pytorch_model(inputs), targets)
@@ -29,10 +27,8 @@ def get_pfl_pytorch_model(loss_fn):
 
     pytorch_model.loss = loss
     pytorch_model.metrics = metrics
-
-
-
-    pt_model = PyTorchModel(pytorch_model, 
-                        local_optimizer_create=torch.optim.SGD,
-                        central_optimizer=torch.optim.SGD(pytorch_model.parameters(), 1.0))
+    pt_model = PyTorchModel(pytorch_model,
+                            local_optimizer_create=OPTIMIZER_PyTorch[cfg.optimizer],
+                            central_optimizer=OPTIMIZER_PyTorch[cfg.optimizer](pytorch_model.parameters()))
+    
     return pt_model

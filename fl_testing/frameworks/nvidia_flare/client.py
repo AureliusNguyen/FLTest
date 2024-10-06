@@ -66,10 +66,8 @@ def main(args):
             tag="loss_per_round", scalar=avg_loss, global_step=global_step)
 
         # Evaluate the model
-        loss, accuracy = test(net, testloader, cfg.device,
-                        cfg.loss_fn, seed=cfg.seed)[1] * 100
-        summary_writer.add_scalar(
-            tag="model_accuracy", scalar=accuracy, global_step=input_model.current_round)
+        loss, accuracy = test(net, testloader, cfg.device, cfg.loss_fn, seed=cfg.seed)
+        summary_writer.add_scalar(tag="model_accuracy", scalar=accuracy, global_step=input_model.current_round)
 
         # Prepare the updated model to send back to the server
         output_model = flare.FLModel(
@@ -78,6 +76,9 @@ def main(args):
             meta={"NUM_STEPS_CURRENT_ROUND": epochs * len(trainloader)}
         )
 
+        temp_cache = Index(cfg.temp_cache_path)
+        temp_cache[f'cid_{args.client_id}'] = (net.state_dict(), len(trainloader))
+        
         # Send the updated model back to the server
         flare.send(output_model)
         print(

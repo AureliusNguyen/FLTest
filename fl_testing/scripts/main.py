@@ -1,15 +1,26 @@
 from diskcache import Index
 import hydra
-from fl_testing.frameworks.nvidia_flare.server import run_flare_simulation
-from fl_testing.frameworks.utils import seed_every_thing
 import os
+
+
+from fl_testing.frameworks.utils import seed_every_thing
+from fl_testing.frameworks.nvidia_flare.server import run_flare_simulation
+from fl_testing.frameworks.flower.server import run_flower_simulation
+from fl_testing.frameworks.apple_pfl.server import run_pfl_simulation
+
 os.environ['PYTHONHASHSEED'] = '786'
+
+FRAMEWORK2SIMULATION = {
+    "flower": run_flower_simulation,
+    "flare": run_flare_simulation,
+    "pfl": run_pfl_simulation
+}
 
 
 def run_fl_simulation(cfg):
     seed_every_thing(cfg.seed)
     key = f"{cfg.exp_name}-{cfg.framework}"
-    current_result = run_flare_simulation(cfg)
+    current_result = FRAMEWORK2SIMULATION[cfg.framework](cfg)
     cache = Index(cfg.framework_cache_path)
     prev_result = cache.get(key)
     cache[key] = current_result

@@ -112,7 +112,7 @@ def get_dataset_for_framework(cfg):
             pin_memory=True
         )
         return {'test_data': test_data, 'c2data': c2data, 'batch_sum': c2sum_first_batch}
-    elif cfg.framework == 'flare':
+    elif cfg.framework in ['flare', 'pfl']:
         dataset_dict = get_cached_federated_dataset(
             cfg.dataset,
             cfg.DATASET_DIVISION_CLIENTS,

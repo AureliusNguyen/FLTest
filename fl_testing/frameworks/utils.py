@@ -3,10 +3,8 @@ import torch
 import numpy as np
 import random
 import copy
-
-
-
-
+from diskcache import Index
+from fl_testing.frameworks.models import get_pytorch_model, sum_model_weights_pytorch
 
 def seed_every_thing(seed):
     random.seed(seed)
@@ -15,8 +13,6 @@ def seed_every_thing(seed):
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-
-
 
 def fedavg_aggregate(models_state_dict, num_samples):
     # Ensure the list of models and number of samples have the same length
@@ -39,3 +35,23 @@ def fedavg_aggregate(models_state_dict, num_samples):
         for key in global_state_dict.keys():
             global_state_dict[key] += state_dict[key] * (n / total_samples)
     return global_state_dict
+
+
+def test_case_own_gm_model_summation(cfg):
+    net = get_pytorch_model(cfg.model_name, cfg.model_cache_path,
+                                deterministic=cfg.deterministic, channels=cfg.channels,  seed=cfg.seed)  
+    temp_cache = Index(cfg.temp_cache_path)
+    client_weights_nsamples = [
+        temp_cache[f'cid_{i}'] for i in range(cfg.num_clients)]
+    client_weights = [c[0] for c in client_weights_nsamples]
+    client_nsamples = [c[1] for c in client_weights_nsamples]
+    aggregated_state_dict = fedavg_aggregate(client_weights, client_nsamples)
+    net.load_state_dict(aggregated_state_dict)
+    total_model_weights = sum_model_weights_pytorch(net)
+    return total_model_weights
+
+
+def get_final_round_results(loss, accuracy, **args):
+    test_case_pytorch_gm = args.get('pytorch_gm_sum', -1)
+    sum_of_weights = args['framework_gm_sum']
+    return {'Final Round Loss':loss, 'Final Round Accuracy':accuracy , 'PyTorch Local GM Sum':test_case_pytorch_gm, 'GM Framework Sum':sum_of_weights} 

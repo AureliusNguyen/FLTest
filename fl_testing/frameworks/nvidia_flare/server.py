@@ -9,9 +9,9 @@ from nvflare.job_config.script_runner import ScriptRunner
 from diskcache import Index
 
 
-from fl_testing.frameworks.models import get_pytorch_model,test, sum_model_weights_pytorch
+from fl_testing.frameworks.models import get_pytorch_model, test, sum_model_weights_pytorch
 from fl_testing.frameworks.pytorch_fl_dataset import get_dataset_for_framework
-from fl_testing.frameworks.utils import seed_every_thing
+from fl_testing.frameworks.utils import seed_every_thing, test_case_own_gm_model_summation, get_final_round_results
 
 
 os.environ['PYTHONHASHSEED'] = '786'
@@ -51,34 +51,30 @@ class TestFedAvg(FedAvg):
             self.save_model(model)
 
         self.info("Finished FedAvg.")
-    
+
     def get_cache_path(self):
         # Return the temp_cache_path. You can define it here.
         temp_cache_path = os.environ.get('TEMP_CACHE_PATH')
         if not temp_cache_path:
-            raise ValueError("TEMP_CACHE_PATH environment variable is not set.")
+            raise ValueError(
+                "TEMP_CACHE_PATH environment variable is not set.")
         return temp_cache_path
-    
+
     def get_final_model_state_dict(self):
         cache_path = self.get_cache_path()
         print(f"Getting final model from cache: {cache_path}")
         cache = Index(cache_path)
-        final_round = self.num_rounds- 1
+        final_round = self.num_rounds - 1
         final_model = cache[f'round_{final_round}']['gm']
         return final_model
 
 
-
-    
-
-def run_simulation(cfg):
+def run_flare_simulation(cfg):
     dir_path = '/home/gulzar/Github/fl_frameworks_testing/data/flare_working/temp'
 
     # clear the directory before running the simulation
     os.system(f'rm -rf {dir_path}')
     os.system(f'mkdir -p {dir_path}')
-
-    
 
     seed_every_thing(cfg.seed)
     # Define job parameters
@@ -135,18 +131,15 @@ def run_simulation(cfg):
         seed=cfg.seed
     )
 
-    torch_state_dict = {k: torch.from_numpy(v) if isinstance(v, np.ndarray) else v for k, v in state_dict.items()} 
+    torch_state_dict = {k: torch.from_numpy(v) if isinstance(
+        v, np.ndarray) else v for k, v in state_dict.items()}
 
     final_model.load_state_dict(torch_state_dict)
 
     # server test loader
-    test_loader = DataLoader(dataset_dict['test_data'].select(range(cfg.max_test_data_size)),batch_size=512,shuffle=False)
-        
+    test_loader = DataLoader(dataset_dict['test_data'].select(range(cfg.max_test_data_size)), batch_size=cfg.server_batch_size, shuffle=False)
     test_loss, test_accuracy = test(net=final_model, testloader=test_loader, device=cfg.device, loss_fn=cfg.loss_fn)
-
     sum_of_weights = sum_model_weights_pytorch(final_model)
-
-
-    return {'final_round_loss':test_loss, 'final_round_accuracy':test_accuracy , 'sum_of_weights':sum_of_weights} 
-    
-
+    test_case_pytorch_gm = test_case_own_gm_model_summation(cfg)
+    res = get_final_round_results(test_loss, test_accuracy, framework_gm_sum=sum_of_weights, pytorch_gm_sum=test_case_pytorch_gm)
+    return res
