@@ -11,9 +11,8 @@ from fl_testing.frameworks.models import get_pytorch_model, sum_model_weights_py
 from fl_testing.frameworks.flower.utils import set_parameters, get_parameters
 
 
-from fl_testing.frameworks.utils  import seed_every_thing, test_case_own_gm_model_summation, get_final_round_results
+from fl_testing.frameworks.utils import seed_every_thing, test_case_own_gm_model_summation, get_final_round_results
 from flwr.common import ndarrays_to_parameters
-
 
 
 def weighted_average(metrics):
@@ -21,9 +20,10 @@ def weighted_average(metrics):
     examples = [num_examples for num_examples, _ in metrics]
     return {"accuracy": sum(accuracies) / sum(examples)}
 
+
 def _fit_metrics_aggregation_fn(metrics):
     """Aggregate metrics recieved from client."""
-    print( ">>   ------------------- Clients Metrics ------------- ")
+    print(">>   ------------------- Clients Metrics ------------- ")
     all_logs = {}
     for nk_points, metric_d in metrics:
         cid = metric_d["cid"]
@@ -35,9 +35,8 @@ def _fit_metrics_aggregation_fn(metrics):
     # sorted by client id from lowest to highest
     for k in sorted(all_logs.keys()):
         print(all_logs[k])
-    
-    return {"loss": 0.0, "accuracy": 0.0}
 
+    return {"loss": 0.0, "accuracy": 0.0}
 
 
 ############ Simulation ####################
@@ -52,7 +51,7 @@ def run_flower_simulation(cfg):
 
     def _central_evaluate(server_round, parameters, config):
         nonlocal final_round_loss, final_round_accuracy, sum_of_weights, own_implmentation_sum_of_weights
-        #seed_every_thing(cfg.seed)
+        # seed_every_thing(cfg.seed)
         net = get_pytorch_model(cfg.model_name, cfg.model_cache_path,
                                 deterministic=cfg.deterministic, channels=cfg.channels,  seed=cfg.seed)
         # Update model with the latest parameters
@@ -66,7 +65,8 @@ def run_flower_simulation(cfg):
         sum_of_weights = sum_model_weights_pytorch(net)
 
         if server_round > 0:
-          own_implmentation_sum_of_weights  = test_case_own_gm_model_summation(cfg)
+            own_implmentation_sum_of_weights = test_case_own_gm_model_summation(
+                cfg)
 
         return loss, {"accuracy": accuracy}
 
@@ -76,23 +76,22 @@ def run_flower_simulation(cfg):
 
     c2batch_sum = fl_dataset_dict['batch_sum']
     net2 = get_pytorch_model(cfg.model_name, cfg.model_cache_path,
-                                deterministic=cfg.deterministic, channels=cfg.channels,  seed=cfg.seed)
-    
+                             deterministic=cfg.deterministic, channels=cfg.channels,  seed=cfg.seed)
+
     initial_parameters = get_parameters(net2)
 
-    
-
     def client_fn(context):  # -> Any:
-        #seed_every_thing(cfg.seed)
+        # seed_every_thing(cfg.seed)
         partition_id = context.node_config["partition-id"]
-        if partition_id < 5:
-            client_data = c2data_loader[0]
-        else:
-            client_data = c2data_loader[1]
+        # if partition_id < 5:
+        #     client_data = c2data_loader[0]
+        # else:
+        #     client_data = c2data_loader[1]
+        client_data = c2data_loader[partition_id]
         return FlowerClient(client_data, cfg, cid=partition_id).to_client()
 
     def server_fn(context):
-        #seed_every_thing(cfg.seed)
+        # seed_every_thing(cfg.seed)
         strategy = FedAvg(
             fraction_fit=1.0,
             fraction_evaluate=0.0,
@@ -102,7 +101,7 @@ def run_flower_simulation(cfg):
             evaluate_metrics_aggregation_fn=weighted_average,
             evaluate_fn=_central_evaluate,
             fit_metrics_aggregation_fn=_fit_metrics_aggregation_fn,
-            initial_parameters= ndarrays_to_parameters(initial_parameters)
+            initial_parameters=ndarrays_to_parameters(initial_parameters)
 
         )
         config = ServerConfig(num_rounds=cfg.num_rounds)
@@ -123,6 +122,6 @@ def run_flower_simulation(cfg):
         num_supernodes=cfg.num_clients,
         backend_config=backend_config,
     )
-    result = get_final_round_results(final_round_loss, final_round_accuracy, pytorch_gm_sum=own_implmentation_sum_of_weights, framework_gm_sum=sum_of_weights)    
+    result = get_final_round_results(final_round_loss, final_round_accuracy,
+                                     pytorch_gm_sum=own_implmentation_sum_of_weights, framework_gm_sum=sum_of_weights)
     return result
-
