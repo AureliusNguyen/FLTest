@@ -19,6 +19,10 @@ def main(args):
     seed_every_thing(786)
     client_id = args.client_id
 
+    print(f'Cache Path: {args.cache_path}')
+    # print current working directory
+    print(f"current working directory: {os.getcwd()}")
+
     cache = Index(args.cache_path)
 
     cfg = cache['flare_cfg']

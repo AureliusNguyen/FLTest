@@ -16,20 +16,18 @@ device: cpu
 total_cpus: 10
 total_gpus: 0
 
-
+# data
 
 # Dataset Configuration
 dataset: mnist
 data_distribution: iid
 DATASET_DIVISION_CLIENTS: 1000  # Reduce dataset per client for faster simulation
-dataset_cache_path: /home/gulzar/Github/fl_frameworks_testing/data/dataset_cache
 max_test_data_size: 2048
 
 
 
 # Model Configuration
 model_name: 'LeNet'
-model_cache_path: /home/gulzar/Github/fl_frameworks_testing/data/models_cache
 channels: ${dataset_channels.${dataset}}
 
 
@@ -43,5 +41,9 @@ client_epochs: 1
 client_batch_size: 32
 server_batch_size: 512
 
+model_cache_path: data/models_cache
+dataset_cache_path: data/dataset_cache
+fw_cache_path: data/caches/${framework} # framework cache path
 
-fw_cache_path: /home/gulzar/Github/fl_frameworks_testing/data/caches/${framework}
+flare_dir_path: data/flare_working/temp
+flare_client_script_path: fl_testing/frameworks/nvidia_flare/client.py

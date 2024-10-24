@@ -8,6 +8,19 @@ from fl_testing.frameworks.utils import seed_every_thing
 import numpy as np
 import torch
 
+# Define transforms for different dataset types
+transforms_dict = {
+    'rgb': transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ]),
+    'grayscale': transforms.Compose([
+        transforms.Resize((32, 32)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))
+    ])
+}
+
 def sum_first_batch(dataloader):
     try:
         batch = next(iter(dataloader))

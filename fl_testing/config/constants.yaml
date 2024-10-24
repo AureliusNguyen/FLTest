@@ -9,25 +9,20 @@ dataset_channels:
     yahoo_answers_topics: None
 
 
-
 # Training Configuration
 loss_fn: CrossEntropyLoss
 optimizer: Adam
 
-# Hydra Configuration
+# Logging Configuration (Hydra)
 hydra:
-  run:
-    dir: ../experiments/results/${now:%Y-%m-%d_%H-%M-%S}
-  job_logging:
-    root:
-      level: INFO
-    loggers:
-      flwr:
-        level: INFO
-      accelerate.utils.other:
-        level: ERROR
+    run:
+        dir: .
+    job_logging:
+        root:
+            level: INFO # Set the job logging level to INFO
+        loggers:
+            flwr:
+                level: INFO
+            accelerate.utils.other:
+                level: ERROR
 
-
-
-flare_dir_path: /home/gulzar/Github/fl_frameworks_testing/data/flare_working/temp
-flare_client_script_path: /home/gulzar/Github/fl_frameworks_testing/fl_testing/frameworks/nvidia_flare/client.py

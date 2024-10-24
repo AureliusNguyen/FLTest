@@ -63,7 +63,7 @@ class TestFedAvg(FedAvg):
 
     def get_final_model_state_dict(self):
         cache_path = self.get_cache_path()
-        print(f"Getting final model from cache: {cache_path}")
+        print(f"NVFLare: Getting final model from cache: {cache_path}")
         cache = Index(cache_path)
         final_round = self.num_rounds - 1
         final_model = cache[f'round_{final_round}']['gm']
@@ -71,15 +71,20 @@ class TestFedAvg(FedAvg):
 
 
 def run_flare_simulation(cfg):
-    dir_path = '/home/gulzar/Github/fl_frameworks_testing/data/flare_working/temp'
 
-    # clear the directory before running the simulation
-    os.system(f'rm -rf {dir_path}')
-    os.system(f'mkdir -p {dir_path}')
+    os.system(f'rm -rf {cfg.flare_dir_path}')
+    os.system(f'mkdir -p {cfg.flare_dir_path}')
 
     seed_every_thing(cfg.seed)
     # Define job parameters
     job_name = "cifar10_pt_fedavg"
+
+    # converting the paths to absolute paths. Its mandatory for NVFlare
+    cfg.fw_cache_path = os.path.abspath(cfg.fw_cache_path)
+    cfg.model_cache_path = os.path.abspath(cfg.model_cache_path)
+    cfg.dataset_cache_path = os.path.abspath(cfg.dataset_cache_path)
+
+
 
     # Prepare the dataset and cache it
     dataset_dict = get_dataset_for_framework(cfg)
@@ -88,8 +93,8 @@ def run_flare_simulation(cfg):
     cache['flare_cfg'] = cfg
     num_clients = cfg.num_clients  # Adjust based on the number of clients
     num_rounds = cfg.num_rounds
-
     os.environ['TEMP_CACHE_PATH'] = cfg.fw_cache_path
+
 
     # Define the FedAvg controller with cfg passed
     controller = TestFedAvg(
