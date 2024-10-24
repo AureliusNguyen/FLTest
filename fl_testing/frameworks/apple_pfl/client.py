@@ -27,8 +27,17 @@ def get_pfl_pytorch_model(cfg):
 
     pytorch_model.loss = loss
     pytorch_model.metrics = metrics
-    pt_model = PyTorchModel(pytorch_model,
-                            local_optimizer_create=OPTIMIZER_PyTorch[cfg.optimizer],
-                            central_optimizer=OPTIMIZER_PyTorch[cfg.optimizer](pytorch_model.parameters()))
-    
-    return pt_model
+
+    # print(f"Original model device: {next(pytorch_model.parameters()).device}")
+
+    pfl_pt_model = PyTorchModel(pytorch_model,
+                                local_optimizer_create=OPTIMIZER_PyTorch[cfg.optimizer],
+                                central_optimizer=OPTIMIZER_PyTorch[cfg.optimizer](pytorch_model.parameters()))
+
+    # print(f"PFL model device: {next(pfl_pt_model.pytorch_model.parameters()).device}")
+
+    # # print(f"PFL pytorch model weights: {pfl_pt_model.pytorch_model.state_dict()}")
+
+    # _ = input("Press Enter to continue...")
+
+    return pfl_pt_model

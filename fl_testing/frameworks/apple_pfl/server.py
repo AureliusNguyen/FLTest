@@ -15,7 +15,8 @@ from fl_testing.frameworks.pytorch_fl_dataset import get_dataset_for_framework
 from fl_testing.frameworks.models import get_pytorch_model, test, sum_model_weights_pytorch
 from fl_testing.frameworks.utils import seed_every_thing, test_case_own_gm_model_summation, get_final_round_results
 
-os.environ['PFL_PYTORCH_DEVICE'] = 'cpu' # Set the device to CPU for PFL . This is a potential bug in the code.
+
+# os.environ['PFL_PYTORCH_DEVICE'] = 'cpu' # Set the device to CPU for PFL . This is a potential bug in the code.
 
 
 def prepare_pfl_datasets(cfg):

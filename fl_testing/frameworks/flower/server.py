@@ -1,4 +1,3 @@
-from diskcache import Index
 
 from flwr.server.strategy import FedAvg
 from flwr.server import ServerApp, ServerConfig, ServerAppComponents
