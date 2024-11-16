@@ -35,7 +35,7 @@ channels: ${dataset_channels.${dataset}}
 
 # Federated Learning Parameters
 num_clients: 10
-num_rounds: 1
+num_rounds: 5
 client_lr: 0.001
 client_epochs: 1
 client_batch_size: 32

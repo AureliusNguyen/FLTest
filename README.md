@@ -1,3 +1,7 @@
 # fl-frameworks-testing
-ollama run qwen2.5-coder
-ollama run deepseek-coder-v2
+
+
+
+conda activate test-fl
+
+poetry run python fl_testing/scripts/main.py framework=flower

@@ -82,6 +82,14 @@ def main(args):
 
         temp_cache = Index(cfg.fw_cache_path)
         temp_cache[f'cid_{args.client_id}'] = (net.state_dict(), len(trainloader))
+
+        # sleep for one minute if the client id is 0
+        if client_id == 0:
+            print(f"Client id {client_id}: sleeping for 60 seconds")
+            import time
+            time.sleep(60)
+
+        
         
         # Send the updated model back to the server
         flare.send(output_model)

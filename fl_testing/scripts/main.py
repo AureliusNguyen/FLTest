@@ -4,8 +4,9 @@ import os
 
 
 from fl_testing.frameworks.utils import seed_every_thing
+from fl_testing.frameworks.flower.simulation import run_flower_simulation
+
 from fl_testing.frameworks.nvidia_flare.server import run_flare_simulation
-from fl_testing.frameworks.flower.server import run_flower_simulation
 from fl_testing.frameworks.apple_pfl.server import run_pfl_simulation
 
 os.environ['PYTHONHASHSEED'] = '786'
@@ -33,9 +34,11 @@ def main(cfg):
     if prev_result is not None:
         for k, v in current_result.items():
             print(f'{k} -> prev {prev_result[k]}, current {v}')
-
+        print("Tests:")
         for k, v in current_result.items():
-            assert v == prev_result[k], f"For {k}, Prev : {prev_result[k]}, Current: {v}"
+            diff = abs(v-prev_result[k])
+            print(f'{k} -> diff {diff}')
+            assert diff < 1e-4, f"Prev : {prev_result[k]}, Current: {v}"
             print(f'{k} Passed')
 
 

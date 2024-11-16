@@ -20,24 +20,25 @@ class FlowerClient(NumPyClient):
         self.cid = cid
 
     def get_parameters(self, config):
-        #seed_every_thing(self.cfg.seed)
         return get_parameters(self.net)
 
     def fit(self, parameters, config):
-        #seed_every_thing(self.cfg.seed)
-        #set_parameters(self.net, parameters)
 
         before_trining_ws = sum_model_weights_pytorch(self.net)
 
         train(self.net, self.trainloader, epochs=self.cfg.client_epochs, device=self.cfg.device,
               loss_fn=self.cfg.loss_fn, opitmzer_name=self.cfg.optimizer, seed=self.cfg.seed)
         after_trining_ws = sum_model_weights_pytorch(self.net)
-        print(
-            f'--> cid {self.cid}, before training {before_trining_ws}, after train {after_trining_ws}')
+        print(f'--> cid {self.cid}, before training {before_trining_ws}, after train {after_trining_ws}')
 
         temp_cache = Index(self.cfg.fw_cache_path)
-        temp_cache[f'cid_{self.cid}'] = (
-            self.net.state_dict(), len(self.trainloader))
+        temp_cache[f'cid_{self.cid}'] = self.net.state_dict(), len(self.trainloader)
+
+        # if self.cid == 0:
+        #     # sleep for 1 minute
+        #     import time
+        #     print(f"client {self.cid} is sleeping for 1 minute") 
+        #     time.sleep(60)
 
         return get_parameters(self.net), len(self.trainloader), {'cid': self.cid, 'before_train': before_trining_ws, 'after_train': after_trining_ws}
 
