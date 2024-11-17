@@ -2,14 +2,11 @@ defaults:
     - constants
     - _self_
 
-
 # Experiment Configuration
 exp_name: "default_experiment"
 framework: flower
 deterministic: True
 seed: 786
-
-
 
 # System Resources
 device: cpu
@@ -21,21 +18,16 @@ total_gpus: 0
 # Dataset Configuration
 dataset: mnist
 data_distribution: iid
-DATASET_DIVISION_CLIENTS: 1000  # Reduce dataset per client for faster simulation
+DATASET_DIVISION_CLIENTS: 1000 # Reduce dataset per client for faster simulation
 max_test_data_size: 2048
 
-
-
 # Model Configuration
-model_name: 'LeNet'
+model_name: "LeNet"
 channels: ${dataset_channels.${dataset}}
-
-
-
 
 # Federated Learning Parameters
 num_clients: 10
-num_rounds: 5
+num_rounds: 10
 client_lr: 0.001
 client_epochs: 1
 client_batch_size: 32

@@ -89,6 +89,7 @@ def get_pytorch_model(model_name, model_cache_dir, deterministic, channels, seed
 
 def train(net, trainloader, epochs, device, loss_fn, opitmzer_name, **args):
     # seed_every_thing(seed=args['seed'])
+    
     criterion = LOSS_FUNCTIONS_PyTorch[loss_fn]()
     optimizer = OPTIMIZER_PyTorch[opitmzer_name](net.parameters())
     net.train()
@@ -106,6 +107,8 @@ def train(net, trainloader, epochs, device, loss_fn, opitmzer_name, **args):
             correct += (torch.max(outputs.data, 1)[1] == labels).sum().item()
         epoch_loss /= len(trainloader.dataset)
         epoch_acc = correct / total
+
+        print(f"Epoch {epoch+1}: train loss {epoch_loss}, accuracy {epoch_acc}")
 
         # if verbose:
         #     print(f"Epoch {epoch+1}: train loss {epoch_loss}, accuracy {epoch_acc}")

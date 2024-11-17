@@ -1,15 +1,14 @@
 
+from flwr.common import ndarrays_to_parameters
 from flwr.server.strategy import FedAvg
 from flwr.server import ServerApp, ServerConfig, ServerAppComponents
 
 
-from fl_testing.frameworks.pytorch_fl_dataset import get_dataset_for_framework
-from fl_testing.frameworks.models import get_pytorch_model, sum_model_weights_pytorch, test
-from fl_testing.frameworks.flower.utils import set_parameters, get_parameters
+from fl_testing.frameworks.models import get_pytorch_model
+from fl_testing.frameworks.flower.utils import get_parameters
 
 
-from fl_testing.frameworks.utils import seed_every_thing, test_case_own_gm_model_summation
-from flwr.common import ndarrays_to_parameters
+from fl_testing.frameworks.utils import seed_every_thing
 
 
 def weighted_average(metrics):
@@ -20,63 +19,28 @@ def weighted_average(metrics):
 
 def _fit_metrics_aggregation_fn(metrics):
     """Aggregate metrics recieved from client."""
-    print(">>   ------------------- Clients Metrics ------------- ")
-    all_logs = {}
-    for nk_points, metric_d in metrics:
-        cid = metric_d["cid"]
-        temp_s = (
-            f' Client {metric_d["cid"]}, before_train: {metric_d["before_train"]}, "after_train":{metric_d["after_train"]}'
-        )
-        all_logs[cid] = temp_s
+    # print(">>   ------------------- Clients Metrics ------------- ")
+    # all_logs = {}
+    # for nk_points, metric_d in metrics:
+    #     cid = metric_d["cid"]
+    #     temp_s = (
+    #         f' Client {metric_d["cid"]}, before_train: {metric_d["before_train"]}, "after_train":{metric_d["after_train"]}'
+    #     )
+    #     all_logs[cid] = temp_s
 
-    # sorted by client id from lowest to highest
-    for k in sorted(all_logs.keys()):
-        print(all_logs[k])
+    # # sorted by client id from lowest to highest
+    # for k in sorted(all_logs.keys()):
+    #     print(all_logs[k])
 
-    return {"loss": 0.0, "accuracy": 0.0}
-
-
+    return {"loss temp": 0.0, "accuracy-temp": 0.0}
 
 
-
-def get_server_app(cfg):
+def get_server_app(cfg, central_eval_fn):
     seed_every_thing(cfg.seed)
-
-    final_round_loss = -1
-    final_round_accuracy = -1
-    sum_of_weights = -1
-    own_implmentation_sum_of_weights = -1
-
-    def _central_evaluate(server_round, parameters, config):
-        nonlocal final_round_loss, final_round_accuracy, sum_of_weights, own_implmentation_sum_of_weights
-        # seed_every_thing(cfg.seed)
-        net = get_pytorch_model(cfg.model_name, cfg.model_cache_path,
-                                deterministic=cfg.deterministic, channels=cfg.channels,  seed=cfg.seed)
-        # Update model with the latest parameters
-        set_parameters(net, parameters)
-        loss, accuracy = test(
-            net, test_data_loader, device=cfg.device, loss_fn=cfg.loss_fn, seed=cfg.seed)
-        print(
-            f"Server-side evaluation loss {loss} / accuracy {accuracy} in round {server_round}")
-        final_round_loss = loss
-        final_round_accuracy = accuracy
-        sum_of_weights = sum_model_weights_pytorch(net)
-
-        if server_round > 0:
-            own_implmentation_sum_of_weights = test_case_own_gm_model_summation(
-                cfg)
-
-        return loss, {"accuracy": accuracy}
-
-    fl_dataset_dict = get_dataset_for_framework(cfg)
-    test_data_loader = fl_dataset_dict['test_data']
-
     net2 = get_pytorch_model(cfg.model_name, cfg.model_cache_path,
                              deterministic=cfg.deterministic, channels=cfg.channels,  seed=cfg.seed)
 
     initial_parameters = get_parameters(net2)
-
-    
 
     def server_fn(context):
         # seed_every_thing(cfg.seed)
@@ -87,7 +51,7 @@ def get_server_app(cfg):
             min_evaluate_clients=0,
             min_available_clients=cfg.num_clients,
             evaluate_metrics_aggregation_fn=weighted_average,
-            evaluate_fn=_central_evaluate,
+            evaluate_fn=central_eval_fn,
             fit_metrics_aggregation_fn=_fit_metrics_aggregation_fn,
             initial_parameters=ndarrays_to_parameters(initial_parameters)
 
