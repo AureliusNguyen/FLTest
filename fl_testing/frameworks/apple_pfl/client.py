@@ -1,3 +1,4 @@
+import types
 import torch
 from pfl.model.pytorch import PyTorchModel
 from pfl.metrics import Weighted
@@ -10,34 +11,33 @@ def get_pfl_pytorch_model(cfg):
                                       deterministic=cfg.deterministic, channels=cfg.channels, seed=cfg.seed).to(cfg.device)
     loss_fn = LOSS_FUNCTIONS_PyTorch[cfg.loss_fn]()
 
-    def loss(inputs, targets, eval=False):
-        return loss_fn(pytorch_model(inputs), targets)
+    # Define loss and metrics as proper methods that use `self`
+    # This ensures they always use the current model state (updated weights)
+    def loss_method(self, inputs, targets, eval=False):
+        self.eval() if eval else self.train()
+        return loss_fn(self(inputs), targets)
 
-    def metrics(inputs, targets, eval=True):
+    def metrics_method(self, inputs, targets, eval=True):
+        self.eval() if eval else self.train()
         with torch.no_grad():
-            logits = pytorch_model(inputs)
-            loss = loss_fn(logits, targets).item()
+            logits = self(inputs)
+            loss_val = loss_fn(logits, targets).item()
             pred = logits.argmax(dim=1, keepdim=True)
             correct = pred.eq(targets.view_as(pred)).sum().item()
             num_samples = len(inputs)
             return {
-                "loss": Weighted(loss, num_samples),
+                "loss": Weighted(loss_val, num_samples),
                 "accuracy": Weighted(correct, num_samples)
             }
 
-    pytorch_model.loss = loss
-    pytorch_model.metrics = metrics
+    # Bind methods to the model using types.MethodType so they receive `self`
+    pytorch_model.loss = types.MethodType(loss_method, pytorch_model)
+    pytorch_model.metrics = types.MethodType(metrics_method, pytorch_model)
 
-    # print(f"Original model device: {next(pytorch_model.parameters()).device}")
-
+    # For FedAvg, central optimizer should use lr=1.0 to directly apply averaged updates
+    # (PFL treats model differences as gradients, so lr=1.0 means direct addition)
     pfl_pt_model = PyTorchModel(pytorch_model,
                                 local_optimizer_create=OPTIMIZER_PyTorch[cfg.optimizer],
-                                central_optimizer=OPTIMIZER_PyTorch[cfg.optimizer](pytorch_model.parameters()))
-
-    # print(f"PFL model device: {next(pfl_pt_model.pytorch_model.parameters()).device}")
-
-    # # print(f"PFL pytorch model weights: {pfl_pt_model.pytorch_model.state_dict()}")
-
-    # _ = input("Press Enter to continue...")
+                                central_optimizer=torch.optim.SGD(pytorch_model.parameters(), lr=1.0))
 
     return pfl_pt_model
