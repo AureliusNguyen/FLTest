@@ -89,7 +89,10 @@ def get_pytorch_model(model_name, model_cache_dir, deterministic, channels, seed
 
 def train(net, trainloader, epochs, device, loss_fn, opitmzer_name, **args):
     # seed_every_thing(seed=args['seed'])
-    
+
+    # Ensure model is on the correct device
+    net.to(device)
+
     criterion = LOSS_FUNCTIONS_PyTorch[loss_fn]()
     optimizer = OPTIMIZER_PyTorch[opitmzer_name](net.parameters())
     net.train()
@@ -117,6 +120,10 @@ def train(net, trainloader, epochs, device, loss_fn, opitmzer_name, **args):
 
 def test(net, testloader, device, loss_fn, **args):
     # seed_every_thing(args['seed'])
+
+    # Ensure model is on the correct device
+    net.to(device)
+
     criterion = LOSS_FUNCTIONS_PyTorch[loss_fn]()
     correct, total, loss = 0, 0, 0.0
     net.eval()

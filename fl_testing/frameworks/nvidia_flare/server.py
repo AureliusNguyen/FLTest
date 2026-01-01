@@ -141,6 +141,7 @@ def run_flare_simulation(cfg):
         v, np.ndarray) else v for k, v in state_dict.items()}
 
     final_model.load_state_dict(torch_state_dict)
+    final_model.to(cfg.device)  # Move model to device (CPU or CUDA)
 
     # server test loader
     test_loader = DataLoader(dataset_dict['test_data'].select(range(cfg.max_test_data_size)), batch_size=cfg.server_batch_size, shuffle=False)

@@ -4,8 +4,10 @@ from fl_testing.frameworks.utils import seed_every_thing
 
 def set_parameters(net, parameters):
     seed_every_thing(786)
+    # Get the device from the model's current parameters
+    device = next(net.parameters()).device
     params_dict = zip(net.state_dict().keys(), parameters)
-    state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
+    state_dict = OrderedDict({k: torch.tensor(v, device=device) for k, v in params_dict})
     net.load_state_dict(state_dict, strict=True)
 
 

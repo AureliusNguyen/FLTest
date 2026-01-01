@@ -28,6 +28,7 @@ def run_flower_simulation(cfg):
         # seed_every_thing(cfg.seed)
         net = get_pytorch_model(cfg.model_name, cfg.model_cache_path,
                                 deterministic=cfg.deterministic, channels=cfg.channels,  seed=cfg.seed)
+        net.to(cfg.device)  # Move model to device (CPU or CUDA)
         # Update model with the latest parameters
         set_parameters(net, parameters)
         loss, accuracy = test(

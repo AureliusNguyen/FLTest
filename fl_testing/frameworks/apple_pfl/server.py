@@ -16,9 +16,9 @@ from fl_testing.frameworks.models import get_pytorch_model, test, sum_model_weig
 from fl_testing.frameworks.utils import seed_every_thing, test_case_own_gm_model_summation, get_final_round_results
 
 
-os.environ['PFL_PYTORCH_DEVICE'] = 'cpu'  # Set the device to CPU for PFL . This is a potential bug in the code.
+# Note: PFL_PYTORCH_DEVICE will be set dynamically in run_pfl_simulation based on cfg.device
 
-
+#os.environ['PFL_PYTORCH_DEVICE'] = 'cpu'  # Set the device to CPU for PFL . This is a potential bug in the code.
 def prepare_pfl_datasets(cfg):
     dataset_dict = get_dataset_for_framework(cfg)
     c2data, central_data = dataset_dict["c2data"], dataset_dict["test_data"]
@@ -58,8 +58,11 @@ class CaptureWeightsCallback(TrainingProcessCallback):
 
 
 def run_pfl_simulation(cfg):
+    # Set PFL device environment variable based on config
+    os.environ['PFL_PYTORCH_DEVICE'] = cfg.device
+
     train_federated_dataset, central_data_pfl, dataset_dict = prepare_pfl_datasets(cfg)
-    print("Running PFL simulation")
+    print(f"Running PFL simulation on device: {cfg.device}")
 
     # Federated Learning Setup and Run
     simulated_backend = SimulatedBackend(
@@ -107,17 +110,19 @@ def run_pfl_simulation(cfg):
         callbacks=callbacks
     )
     print("Federated Learning completed!")
-    res = construc_result(pfl_nn_model.pytorch_model, dataset_dict['test_data'], cfg)
-    
-    # gm_weights = capture_weights_callback.get_last_round_gm_weights()
-    # final_model = get_pytorch_model(cfg.model_name, model_cache_dir=cfg.model_cache_path,
-    #                                   deterministic=cfg.deterministic, channels=cfg.channels, seed=cfg.seed).to(cfg.device)
-    # final_model.load_state_dict(gm_weights)
-    
+
+    # Get the aggregated weights from callback and load into a fresh model
+    gm_weights = capture_weights_callback.get_last_round_gm_weights()
+    final_model = get_pytorch_model(cfg.model_name, model_cache_dir=cfg.model_cache_path,
+                                      deterministic=cfg.deterministic, channels=cfg.channels, seed=cfg.seed).to(cfg.device)
+    final_model.load_state_dict(gm_weights)
+
+    res = construc_result(final_model, dataset_dict['test_data'], cfg)
     return res
 
 
 def construc_result(model, test_data, cfg):
+    model.to(cfg.device)  # Ensure model is on correct device
     test_loader = DataLoader(test_data.select(range(cfg.max_test_data_size)), batch_size=cfg.server_batch_size, shuffle=False)
     test_loss, test_accuracy = test(net=model, testloader=test_loader, device=cfg.device, loss_fn=cfg.loss_fn)
     sum_of_weights = sum_model_weights_pytorch(model)

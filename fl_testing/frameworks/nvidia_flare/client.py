@@ -44,6 +44,7 @@ def main(args):
     # Initialize the network
     net = get_pytorch_model(cfg.model_name, cfg.model_cache_path,
                             deterministic=cfg.deterministic, channels=cfg.channels,  seed=cfg.seed)
+    net.to(cfg.device)  # Move model to device (CPU or CUDA)
 
     # Training parameters
     epochs = cfg.client_epochs
@@ -57,6 +58,7 @@ def main(args):
 
         # Load the received global model weights
         net.load_state_dict(input_model.params)
+        net.to(cfg.device)  # Ensure model is on correct device after loading weights
         net.train()
 
         # Perform local training
