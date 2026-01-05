@@ -17,11 +17,13 @@ def run_flower_simulation(cfg):
     sum_of_weights = -1
     own_implmentation_sum_of_weights = -1
 
-    init_args = {"num_cpus": cfg.total_cpus, "num_gpus": cfg.total_gpus}
+    # For CUDA: use fractional GPU so all clients can share the single GPU
+    num_gpus_total = 1 if cfg.device == "cuda" else cfg.total_gpus
+    num_gpus_per_client = (1.0 / cfg.num_clients) if cfg.device == "cuda" else 0.0
+
+    init_args = {"num_cpus": cfg.total_cpus, "num_gpus": num_gpus_total}
     backend_config = {"client_resources": {
-        "num_cpus": 1, "num_gpus": 0.0}, 'init_args': init_args}
-    if cfg.device == "cuda":
-        backend_config["client_resources"]["num_gpus"] = 1.0
+        "num_cpus": 1, "num_gpus": num_gpus_per_client}, 'init_args': init_args}
 
     def _central_evaluate(server_round, parameters, config):
         nonlocal final_round_loss, final_round_accuracy, sum_of_weights, own_implmentation_sum_of_weights
