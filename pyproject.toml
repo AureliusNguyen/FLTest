@@ -23,6 +23,8 @@ torchvision = "0.15.2+cu118"
 diskcache = "5.6.3"
 pytest = "^8.3.3"
 pytest-html = "^4.1.1"
+pydantic = "^2.0"
+click = "^8.0"
 
 [tool.poetry.extras]
 pytorch = [ 'torch', 'cmake']
@@ -35,6 +37,9 @@ name = "torch_cu118"
 url = "https://download.pytorch.org/whl/cu118"
 priority = "supplemental"
 
+
+[tool.poetry.scripts]
+fl-validate = "fl_testing.validator.cli:main"
 
 [build-system]
 requires = ["poetry-core"]
