@@ -1,6 +1,6 @@
 from torchvision import transforms
 from flwr_datasets import FederatedDataset
-from flwr_datasets.partitioner import IidPartitioner
+from flwr_datasets.partitioner import IidPartitioner, DirichletPartitioner, PathologicalPartitioner
 from diskcache import Index
 from torch.utils.data import DataLoader
 from fl_testing.frameworks.utils import seed_every_thing
@@ -8,8 +8,13 @@ from fl_testing.frameworks.utils import seed_every_thing
 import numpy as np
 import torch
 
-# Define transforms for different dataset types
-transforms_dict = {
+# Dataset configs: transform type and image column name
+DATASET_CONFIG = {
+    'mnist': ('grayscale', 'image'),
+    'cifar10': ('rgb', 'img'),
+}
+
+TRANSFORMS = {
     'rgb': transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
@@ -21,117 +26,78 @@ transforms_dict = {
     ])
 }
 
-def sum_first_batch(dataloader):
-    try:
-        batch = next(iter(dataloader))
-    except StopIteration:
-        raise ValueError(
-            "The DataLoader is empty. Cannot compute sum on an empty DataLoader.")
-
-    # Check if the batch is a dictionary
-    if isinstance(batch, dict):
-        # Extract input tensors assuming they are under the key 'img'
-        if "img" not in batch:
-            raise KeyError(
-                "The batch dictionary does not contain the key 'img'.")
-        inputs = batch["img"]
-    else:
-        # If the batch is a tuple or list, assume the first element is the input tensor
-        inputs = batch[0]
-
-    # Compute the sum of all elements in the input tensor
-    total_sum = torch.sum(inputs)
-
-    return total_sum.item()
+# Partitioners: name -> constructor function
+# alpha: lower = more non-IID (0.1 extreme, 100 nearly IID)
+PARTITIONERS = {
+    'iid': lambda n: IidPartitioner(num_partitions=n),
+    'dirichlet': lambda n: DirichletPartitioner(num_partitions=n, partition_by="label", alpha=0.5),
+    'pathological': lambda n: PathologicalPartitioner(num_partitions=n, partition_by="label", num_classes_per_partition=2),
+}
 
 
 def get_federated_dataset(dataset_name, num_clients, partitioner_config='iid'):
-    if partitioner_config == 'iid':
-        partitioner = IidPartitioner(num_partitions=num_clients)
-        fds = FederatedDataset(dataset=dataset_name, partitioners={
-                               "train": partitioner})
+    if partitioner_config not in PARTITIONERS:
+        raise ValueError(f"Unknown partitioner: {partitioner_config}. Options: {list(PARTITIONERS.keys())}")
+    if dataset_name not in DATASET_CONFIG:
+        raise ValueError(f"Unknown dataset: {dataset_name}. Options: {list(DATASET_CONFIG.keys())}")
 
-        # Determine the appropriate transform based on the dataset
-        if dataset_name == "cifar10":
-            transform = transforms_dict['rgb']
-            img_col_name = 'img'
-        elif dataset_name == "mnist":
-            transform = transforms_dict['grayscale']
-            img_col_name = 'image'
-        else:
-            raise ValueError(f"Unsupported dataset: {dataset_name}")
+    partitioner = PARTITIONERS[partitioner_config](num_clients)
+    fds = FederatedDataset(dataset=dataset_name, partitioners={"train": partitioner})
 
-        test_data = fds.load_split("test")
-        test_data = test_data.map(lambda img: {"img": transform(
-            img)}, input_columns=img_col_name).with_format("torch")
+    transform_type, img_col = DATASET_CONFIG[dataset_name]
+    transform = TRANSFORMS[transform_type]
 
-        c2data = {}
-        for cid in range(num_clients):
-            temp_partition = fds.load_partition(cid)
-            torch_partition = temp_partition.map(lambda img: {"img": transform(
-                img)}, input_columns=img_col_name).with_format("torch")
-            c2data[cid] = torch_partition
+    def apply_transform(img):
+        return {"img": transform(img)}
 
-        return {'c2data': c2data, 'test_data': test_data}
-    else:
-        raise ValueError(f"Unknown partitioner config: {partitioner_config}")
+    test_data = fds.load_split("test").map(apply_transform, input_columns=img_col).with_format("torch")
+    c2data = {
+        cid: fds.load_partition(cid).map(apply_transform, input_columns=img_col).with_format("torch")
+        for cid in range(num_clients)
+    }
+
+    return {'c2data': c2data, 'test_data': test_data}
 
 
 def get_cached_federated_dataset(dataset_name, num_clients, cache_path, partitioner_config='iid'):
-    dcache = Index(cache_path)
+    cache = Index(cache_path)
     key = f"{dataset_name}_{num_clients}_{partitioner_config}"
+    if key not in cache:
+        cache[key] = get_federated_dataset(dataset_name, num_clients, partitioner_config)
+    return cache[key]
 
-    if key not in dcache:
-        dcache[key] = get_federated_dataset(
-            dataset_name, num_clients, partitioner_config)
 
-    return dcache[key]
+def sum_first_batch(dataloader):
+    batch = next(iter(dataloader))
+    inputs = batch["img"] if isinstance(batch, dict) else batch[0]
+    return torch.sum(inputs).item()
 
 
 def get_dataset_for_framework(cfg):
     seed_every_thing(cfg.seed)
 
-    if cfg.framework == 'flower':
-        dataset_dict = get_cached_federated_dataset(
-            cfg.dataset,
-            cfg.DATASET_DIVISION_CLIENTS,
-            cfg.dataset_cache_path,
-            cfg.data_distribution
-        )
+    dataset_dict = get_cached_federated_dataset(
+        cfg.dataset, cfg.DATASET_DIVISION_CLIENTS, cfg.dataset_cache_path, cfg.data_distribution
+    )
 
-        def worker_init_fn(worker_id):
-            np.random.seed(cfg.seed + worker_id)
-
-        c2data = {
-            cid: DataLoader(
-                dset,
-                batch_size=cfg.client_batch_size,
-                shuffle=True,
-                num_workers=0,
-                worker_init_fn=worker_init_fn,
-                pin_memory=True
-            )
-            for cid, dset in dataset_dict['c2data'].items()
-        }
-
-        c2sum_first_batch = {c: sum_first_batch(
-            b) for c, b in c2data.items() if c in list(range(cfg.num_clients))}
-
-        test_data = DataLoader(
-            dataset_dict['test_data'].select(range(cfg.max_test_data_size)),
-            batch_size=cfg.server_batch_size,
-            num_workers=0,
-            shuffle=False,  # Ensure no shuffling in test loader
-            pin_memory=True
-        )
-        return {'test_data': test_data, 'c2data': c2data, 'batch_sum': c2sum_first_batch}
-    elif cfg.framework in ['flare', 'pfl']:
-        dataset_dict = get_cached_federated_dataset(
-            cfg.dataset,
-            cfg.DATASET_DIVISION_CLIENTS,
-            cfg.dataset_cache_path,
-            cfg.data_distribution
-        )
+    if cfg.framework in ['flare', 'pfl']:
         return dataset_dict
-    else:
-        raise ValueError(f"Unknown framework: {cfg.framework}")
+
+    # Flower needs DataLoaders
+    def worker_init_fn(worker_id):
+        np.random.seed(cfg.seed + worker_id)
+
+    c2data = {
+        cid: DataLoader(dset, batch_size=cfg.client_batch_size, shuffle=True,
+                        num_workers=0, worker_init_fn=worker_init_fn, pin_memory=True)
+        for cid, dset in dataset_dict['c2data'].items()
+    }
+
+    test_data = DataLoader(
+        dataset_dict['test_data'].select(range(cfg.max_test_data_size)),
+        batch_size=cfg.server_batch_size, shuffle=False, num_workers=0, pin_memory=True
+    )
+
+    batch_sums = {c: sum_first_batch(dl) for c, dl in c2data.items() if c < cfg.num_clients}
+
+    return {'test_data': test_data, 'c2data': c2data, 'batch_sum': batch_sums}
