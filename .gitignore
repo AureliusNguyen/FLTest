@@ -165,4 +165,5 @@ cython_debug/
 .hydra/
 
 data/
+tmp/
 experiments/config/logging/
