@@ -9,10 +9,18 @@ poetry install
 ```
 
 ### Example Run
+#### Simple Run
 ```
 export FLTEST_HOOKS=examples/hooks/atk_label_flip
+poetry run python fltest/main.py
+```
+
+#### Multiple hook files, custom rounds
+```
+export FLTEST_HOOKS=examples/hooks/atk_label_flip,examples/hooks/fltest_hooks_a,examples/hooks/fltest_hooks_b
 poetry run python fltest/main.py num_rounds=20
 ```
+
 
 ## Configuration
 
