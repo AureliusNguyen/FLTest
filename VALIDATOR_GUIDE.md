@@ -1,6 +1,7 @@
 # FL Parameter Grid Validator - Complete Guide
 
 ## Table of Contents
+
 1. [What Is This?](#what-is-this)
 2. [The Core Concept](#the-core-concept)
 3. [Architecture Overview](#architecture-overview)
@@ -18,6 +19,7 @@
 The FL Parameter Grid Validator is a **sanity-checking tool** for federated learning frameworks. Instead of comparing different frameworks against each other (which your existing benchmarks do), this tool validates that a **single framework behaves as expected** when you change its parameters.
 
 Think of it like this:
+
 - **Before**: "Flower takes 221s, FLARE takes 835s" (comparison)
 - **Now**: "When I increase training rounds from 5 to 10, accuracy should go up. Did it?" (validation)
 
@@ -30,6 +32,7 @@ This is similar to scikit-learn's `GridSearchCV`, but instead of finding optimal
 ### The Problem We're Solving
 
 When working with FL frameworks, you might encounter bugs where:
+
 - More training rounds **don't** improve accuracy (something's broken)
 - Changing learning rate has **no effect** (optimizer not working)
 - Results are **wildly inconsistent** (non-determinism bug)
@@ -121,13 +124,16 @@ Verdict: FAILED - Something is wrong with the framework
 
 The command-line interface built with Click. Provides three commands:
 
-| Command | Purpose |
-|---------|---------|
-| `fl-validate run config.yaml` | Run validation and execute experiments |
-| `fl-validate preview config.yaml` | Show what would run without executing |
-| `fl-validate list` | List available validation configs |
+
+| Command                           | Purpose                                |
+| --------------------------------- | -------------------------------------- |
+| `fl-validate run config.yaml`     | Run validation and execute experiments |
+| `fl-validate preview config.yaml` | Show what would run without executing  |
+| `fl-validate list`                | List available validation configs      |
+
 
 **Key options for `run`:**
+
 - `--dry-run` / `-d`: Preview without executing
 - `--parallel` / `-p`: Run experiments in parallel
 - `--workers N`: Number of parallel workers
@@ -139,6 +145,7 @@ The command-line interface built with Click. Provides three commands:
 Defines the structure of validation YAML files using Pydantic models. This ensures your config files are valid before running expensive experiments.
 
 **Key models:**
+
 - `ValidationConfig`: Root configuration
 - `ParameterGrid`: Defines how to vary parameters
 - `ParameterSpec`: Single parameter's values or range
@@ -148,6 +155,7 @@ Defines the structure of validation YAML files using Pydantic models. This ensur
 ### 3. Config Parser (`fl_testing/validator/config/parser.py`)
 
 Simple YAML loader that:
+
 1. Reads the YAML file
 2. Handles the optional `validation:` wrapper key
 3. Validates against Pydantic schema
@@ -192,6 +200,7 @@ The execution engine. For each experiment:
 6. **Validate**: Pass all results to rule validators
 
 **Features:**
+
 - Sequential or parallel execution
 - Timeout handling (kills hung experiments)
 - Continue-on-failure (don't abort entire run if one experiment fails)
@@ -202,6 +211,7 @@ The execution engine. For each experiment:
 Three types of expectation rules:
 
 #### MonotonicRule (`monotonic.py`)
+
 Checks that a metric consistently increases or decreases as a parameter changes.
 
 ```python
@@ -215,6 +225,7 @@ MonotonicRule(
 ```
 
 #### BoundedRule (`bounded.py`)
+
 Checks that a metric stays within min/max bounds.
 
 ```python
@@ -227,6 +238,7 @@ BoundedRule(
 ```
 
 #### RelativeThresholdRule (`relative_threshold.py`)
+
 Checks that the metric doesn't change too dramatically between adjacent parameter values.
 
 ```python
@@ -241,6 +253,7 @@ RelativeThresholdRule(
 ### 7. JSON Reporter (`fl_testing/validator/output/json_reporter.py`)
 
 Generates a structured JSON report containing:
+
 - Metadata (timestamp, git commit, duration)
 - Summary (pass/fail counts)
 - All experiment results
@@ -338,11 +351,13 @@ validation:
 **Purpose**: Verify that a metric consistently moves in one direction as a parameter changes.
 
 **When to use**:
+
 - More training rounds → better accuracy
 - More data → better accuracy
 - Higher learning rate → faster convergence (up to a point)
 
 **Configuration**:
+
 ```yaml
 - type: "monotonic"
   parameter: "num_rounds"        # The parameter being varied
@@ -352,12 +367,14 @@ validation:
 ```
 
 **How it works**:
+
 1. Sort experiments by parameter value
 2. For each adjacent pair, check if metric moved in expected direction
 3. Allow violations within tolerance
 4. Report any violations
 
 **Example**:
+
 ```
 num_rounds=2  → accuracy=0.45
 num_rounds=5  → accuracy=0.72  ✓ (0.72 > 0.45)
@@ -370,11 +387,13 @@ num_rounds=20 → accuracy=0.50  ✗ (0.50 < 0.70-0.05, violation!)
 **Purpose**: Verify that a metric stays within acceptable bounds.
 
 **When to use**:
+
 - Accuracy should be between 0 and 1
 - Loss should be positive and below some threshold
 - Training time should be reasonable
 
 **Configuration**:
+
 ```yaml
 - type: "bounded"
   metric: "Final Round Accuracy"
@@ -383,11 +402,13 @@ num_rounds=20 → accuracy=0.50  ✗ (0.50 < 0.70-0.05, violation!)
 ```
 
 **How it works**:
+
 1. Check every experiment's metric value
 2. Flag any values outside [min_value, max_value]
 3. Report violations with the actual values
 
 **Example**:
+
 ```
 exp_001: accuracy=0.45 ✓ (within [0.3, 1.0])
 exp_002: accuracy=0.72 ✓
@@ -400,11 +421,13 @@ exp_004: accuracy=1.05 ✗ (above 1.0!)
 **Purpose**: Catch sudden dramatic changes that might indicate bugs.
 
 **When to use**:
+
 - Ensure no catastrophic forgetting
 - Catch instability in training
 - Detect anomalous results
 
 **Configuration**:
+
 ```yaml
 - type: "relative_threshold"
   parameter: "num_rounds"
@@ -413,11 +436,13 @@ exp_004: accuracy=1.05 ✗ (above 1.0!)
 ```
 
 **How it works**:
+
 1. Sort experiments by parameter value
 2. Calculate percent change between adjacent experiments
 3. Flag any changes exceeding the threshold
 
 **Example**:
+
 ```
 num_rounds=2  → accuracy=0.45
 num_rounds=5  → accuracy=0.72  → change=60% ✗ (exceeds 50%!)
@@ -432,6 +457,7 @@ num_rounds=20 → accuracy=0.88  → change=4%  ✓
 ### Prerequisites
 
 The dependencies are already installed. Verify with:
+
 ```bash
 poetry run fl-validate --version
 ```
@@ -446,6 +472,7 @@ poetry run fl-validate preview fl_testing/config/validation/examples/rounds_swee
 ```
 
 Output:
+
 ```
 Validation: flower_rounds_sweep
 Framework: flower
@@ -471,6 +498,7 @@ poetry run fl-validate run fl_testing/config/validation/examples/rounds_sweep.ya
 ```
 
 This will:
+
 1. Run 3 Flower experiments (rounds=2, 5, 10)
 2. Each experiment trains an FL model on MNIST
 3. Collect accuracy and loss metrics
@@ -530,6 +558,7 @@ poetry run fl-validate list --path fl_testing/config/validation
 ### Console Output
 
 During execution, you'll see:
+
 ```
 [INFO] Loading configuration from config.yaml
 [INFO] Generated 3 experiments for flower
@@ -597,11 +626,13 @@ During execution, you'll see:
 
 ### Exit Codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | All rules passed |
-| 1 | One or more rules failed |
-| 2 | Configuration error or crash |
+
+| Code | Meaning                      |
+| ---- | ---------------------------- |
+| 0    | All rules passed             |
+| 1    | One or more rules failed     |
+| 2    | Configuration error or crash |
+
 
 This makes it easy to use in CI/CD pipelines.
 
@@ -681,3 +712,4 @@ poetry run fl-validate --version
 2. **Run a quick test**: `poetry run fl-validate run fl_testing/config/validation/examples/rounds_sweep.yaml`
 3. **Create your own config**: Copy an example and modify for your needs
 4. **Integrate with CI/CD**: Use exit codes and JSON output
+

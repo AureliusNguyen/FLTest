@@ -42,6 +42,9 @@ def get_server_app(cfg, central_eval_fn):
 
     initial_parameters = get_parameters(net2)
 
+    def _fit_config(server_round: int):
+        return {"server_round": server_round}
+
     def server_fn(context):
         # seed_every_thing(cfg.seed)
         strategy = FedAvg(
@@ -53,6 +56,7 @@ def get_server_app(cfg, central_eval_fn):
             evaluate_metrics_aggregation_fn=weighted_average,
             evaluate_fn=central_eval_fn,
             fit_metrics_aggregation_fn=_fit_metrics_aggregation_fn,
+            on_fit_config_fn=_fit_config,
             initial_parameters=ndarrays_to_parameters(initial_parameters)
 
         )
