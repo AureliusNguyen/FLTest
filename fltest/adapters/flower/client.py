@@ -40,6 +40,7 @@ class FlowerClient(NumPyClient):
             round=config.get("server_round", 0),
             client_id=self.cid,
             client_data=self.trainloader,
+            global_state=parameters,  # Expose global params for gradient-based hooks (e.g. DLG)
         )
         self.hook_runner.run("before_client_train", ctx_pre)
         if ctx_pre.client_data is not None:
