@@ -5,6 +5,11 @@ versioning](https://semver.org). The patch number changes for a fix and the mino
 for new capability that leaves existing configs working. The major number changes when the
 configuration schema or the plugin API breaks.
 
+## 0.3.3
+
+Documentation uses the light scheme only, so the dark toggle and its maroon page background
+are gone. Removed the brand section from the landing page.
+
 ## 0.3.2
 
 **CI.** Added `.github/workflows/ci.yml`, which runs on every pull request and on pushes to
