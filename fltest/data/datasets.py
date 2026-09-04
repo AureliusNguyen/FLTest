@@ -50,11 +50,14 @@ class DatasetSpec:
 
 
 DATASET_CONFIG: Dict[str, DatasetSpec] = {
-    "mnist": DatasetSpec("mnist", "image", channels=1, num_classes=10, transform="grayscale"),
+    # Hub ids are always `namespace/name`. huggingface-hub 1.16 dropped the bare form, so
+    # `mnist` raises HfUriError there unless a stale local cache happens to answer for it.
+    "mnist": DatasetSpec("ylecun/mnist", "image", channels=1, num_classes=10, transform="grayscale"),
     "fashion_mnist": DatasetSpec(
-        "fashion_mnist", "image", channels=1, num_classes=10, transform="grayscale"
+        "zalando-datasets/fashion_mnist", "image", channels=1, num_classes=10,
+        transform="grayscale",
     ),
-    "cifar10": DatasetSpec("cifar10", "img", channels=3, num_classes=10, transform="rgb"),
+    "cifar10": DatasetSpec("uoft-cs/cifar10", "img", channels=3, num_classes=10, transform="rgb"),
     "cifar100": DatasetSpec(
         "uoft-cs/cifar100", "img", label_column="fine_label",
         channels=3, num_classes=100, transform="rgb",
@@ -149,6 +152,13 @@ def resolve_dataset(dataset_name: str) -> DatasetSpec:
     """Return the :class:`DatasetSpec` for a built-in name or a Hugging Face id."""
     if dataset_name in DATASET_CONFIG:
         return DATASET_CONFIG[dataset_name]
+    if "/" not in dataset_name:
+        raise ValueError(
+            f"Unknown dataset '{dataset_name}'. Built-in names are {list_datasets()}. Any "
+            f"other dataset is a Hugging Face id and must be written as 'namespace/name', "
+            f"for example 'uoft-cs/cifar10'. The bare form was removed in "
+            f"huggingface-hub 1.16."
+        )
     return _probe_hub(dataset_name)
 
 

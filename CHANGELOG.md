@@ -5,6 +5,22 @@ versioning](https://semver.org). The patch number changes for a fix and the mino
 for new capability that leaves existing configs working. The major number changes when the
 configuration schema or the plugin API breaks.
 
+## 0.4.4
+
+**Fixed.** The built-in datasets used bare Hugging Face ids, so `mnist`, `fashion_mnist`,
+and `cifar10` were passed to the Hub as-is. huggingface-hub 1.16 removed that form, and
+a fresh environment installs a later version, so any of those datasets failed with
+`HfUriError` on a machine without a warm cache. The ids are now namespaced as
+`ylecun/mnist`, `zalando-datasets/fashion_mnist`, and `uoft-cs/cifar10`, which works on
+old and new versions alike. The short names in a config are unchanged.
+
+The failure only appeared on a cold cache, because a machine that had already downloaded
+the dataset answered from disk and printed a note about the Hub lookup failing. A test now
+asserts every built-in id is namespaced, since a run on a warm machine cannot catch this.
+
+A Hub id given directly in a config is checked too. A bare name that is not a built-in now
+explains that the id needs a namespace, instead of surfacing the Hub's own error.
+
 ## 0.4.3
 
 **Worked example.** The exhaustive attack and defense matrix moves from MNIST with an MLP

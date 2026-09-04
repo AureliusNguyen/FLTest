@@ -67,3 +67,18 @@ def test_initial_weight_cache_separates_class_counts():
 def test_unknown_model_name_explains_the_options():
     with pytest.raises(ValueError, match="hf:"):
         get_model("NoSuchNet", "data/models_cache", channels=1, num_classes=10)
+
+
+def test_every_dataset_id_is_namespaced():
+    """huggingface-hub 1.16 dropped bare repository ids, so `mnist` no longer resolves.
+
+    A machine with a warm cache still answers for the bare form, which is why this needs a
+    test rather than a run: the failure only appears on a cold cache.
+    """
+    bare = {name: spec.hf_id for name, spec in DATASET_CONFIG.items() if "/" not in spec.hf_id}
+    assert not bare, f"these must be written as namespace/name: {bare}"
+
+
+def test_a_bare_unknown_dataset_says_what_is_wrong():
+    with pytest.raises(ValueError, match="must be written as 'namespace/name'"):
+        resolve_dataset("not_a_builtin")
