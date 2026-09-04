@@ -5,6 +5,20 @@ versioning](https://semver.org). The patch number changes for a fix and the mino
 for new capability that leaves existing configs working. The major number changes when the
 configuration schema or the plugin API breaks.
 
+## 0.4.7
+
+**Fixed.** A run that failed because transformers had disabled its PyTorch backend reported
+`ImportError:` and nothing else. transformers raises a message beginning with a blank line,
+so the first line of the recorded error held only the exception name. The run matrix now
+carries the next line with content up beside it.
+
+**Changed.** Building an `hf:` model checks that transformers still has its PyTorch backend
+before it tries. transformers reports that PyTorch "was not found" in this case, which is
+misleading, since torch is installed and every built-in model trains with it. FLTest names
+the real cause, which is the version floor, and the fix, which is the capped `[hf]` extra.
+
+Also documented that torch 2.2.2 needs `numpy<2`.
+
 ## 0.4.6
 
 **Fixed.** A three-way differential printed 165 lines, 143 of them NVFlare INFO and WARNING

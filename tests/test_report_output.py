@@ -101,3 +101,17 @@ def test_single_round_run_has_no_trace(capsys):
     r.history = {1: {"accuracy": 0.9}}
     print_run_matrix("demo", [r])
     assert "per-round accuracy:" not in capsys.readouterr().out
+
+
+def test_failure_reason_skips_a_leading_blank_line(capsys):
+    """Some libraries raise messages that begin with a newline.
+
+    Reporting the first line verbatim then prints the exception name and nothing else,
+    which is how an unusable `ImportError:` reached a user.
+    """
+    bad = _result("bad", status="failed",
+                  error="ImportError: \n\nAutoModel requires the PyTorch library\nmore detail")
+    print_run_matrix("demo", [bad])
+    out = capsys.readouterr().out
+    assert "AutoModel requires the PyTorch library" in out
+    assert "failed: ImportError:\n" not in out

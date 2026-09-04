@@ -171,6 +171,32 @@ class _HFImageClassifier(nn.Module):
         return self.inner(pixel_values=x).logits
 
 
+def _require_torch_backend(model_id: str) -> None:
+    """Fail clearly when transformers has switched its own PyTorch backend off.
+
+    transformers 5 requires torch 2.5 or later. On an older torch it disables the backend
+    and then reports that PyTorch "was not found", which is misleading, because torch is
+    installed and every built-in model still trains with it. The cap in the ``[hf]`` extra
+    is the fix, so name it here rather than leaving the user to act on that message.
+    """
+    from transformers.utils import is_torch_available
+
+    if is_torch_available():
+        return
+
+    import torch
+    import transformers
+
+    raise ImportError(
+        f"transformers {transformers.__version__} has disabled its PyTorch backend, so "
+        f"'{HF_PREFIX}{model_id}' cannot be built. It requires torch 2.5 or later and this "
+        f"environment has torch {torch.__version__}. PyTorch itself is working, and every "
+        f"built-in and torchvision model still trains. Install the capped extra with "
+        f'pip install -e ".[hf]", which pins transformers below 5. On macOS x86_64 that is '
+        f"the only option, since torch publishes no wheel past 2.2.2 for it."
+    )
+
+
 class _HFTextClassifier(nn.Module):
     """Wrap a transformers text classifier so it returns logits like every other model."""
 
@@ -191,6 +217,7 @@ def _build_hf_text(model_id: str, num_classes: int) -> nn.Module:
             f"Loading '{HF_PREFIX}{model_id}' for text needs the Hugging Face extra. Install "
             f'it with pip install -e ".[hf]"'
         ) from exc
+    _require_torch_backend(model_id)
     config = AutoConfig.from_pretrained(model_id, num_labels=num_classes)
     return _HFTextClassifier(AutoModelForSequenceClassification.from_config(config))
 
@@ -216,6 +243,7 @@ def _build_hf(model_id: str, channels: int, num_classes: int) -> nn.Module:
             f"Loading '{HF_PREFIX}{model_id}' needs the Hugging Face extra. Install it with "
             f'pip install -e ".[hf]"'
         ) from exc
+    _require_torch_backend(model_id)
     config = AutoConfig.from_pretrained(model_id, num_labels=num_classes)
     if hasattr(config, "num_channels"):
         config.num_channels = channels
