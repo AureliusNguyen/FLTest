@@ -93,6 +93,11 @@ For a text dataset the model must be a Hugging Face sequence classifier, named t
 way (`hf:google/bert_uncased_L-2_H-128_A-2`). Asking for an image model on text data raises
 an error that says so.
 
+The NVFlare backend accepts built-in models only. It rebuilds the model in its server
+process from the class path and serialises the constructor arguments to JSON, and a
+torchvision architecture takes a class as an argument, which cannot be encoded. Run those
+models on the reference or Flower backend.
+
 Weights are always randomly initialised, never pretrained, because federated training has
 to start from one shared initialisation across every client and framework.
 

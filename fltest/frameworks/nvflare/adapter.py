@@ -26,7 +26,7 @@ from nvflare.app_common.workflows.fedavg import FedAvg
 from fltest.core import HookContext, HookRunner
 from fltest.core.config import RunSpec
 from fltest.core.registry import register_framework
-from fltest.data.models import get_model, model_weight_sum, test
+from fltest.data.models import MODEL_REGISTRY, get_model, model_weight_sum, test
 from fltest.data.utils import seed_everything, state_dict_to_ndarrays
 from fltest.frameworks.base import FrameworkAdapter, RunResult
 
@@ -69,6 +69,15 @@ class NVFlareAdapter(FrameworkAdapter):
         from nvflare.app_opt.pt.job_config.base_fed_job import BaseFedJob
         from nvflare.job_config.script_runner import ScriptRunner
 
+        if spec.model_name not in MODEL_REGISTRY:
+            raise ValueError(
+                f"The NVFlare backend cannot run '{spec.model_name}'. NVFlare rebuilds the "
+                f"model from its class path and serialises the constructor arguments to "
+                f"JSON, and a torchvision architecture takes a class as an argument, which "
+                f"is not serialisable. Use a built-in model ({sorted(MODEL_REGISTRY)}) here, "
+                f"or run this model on the reference or Flower backend."
+            )
+
         seed_everything(spec.seed)
         result = RunResult(run_id=spec.run_id, run_name=spec.run_name, framework=self.name)
 
@@ -81,6 +90,10 @@ class NVFlareAdapter(FrameworkAdapter):
         workspace = os.path.abspath(os.path.join(spec.fw_cache_path, "nvflare_workspace"))
         model_cache_abs = os.path.abspath(spec.model_cache_path)
         shutil.rmtree(workspace, ignore_errors=True)
+        # Round snapshots are keyed by round number in this cache. Left in place, a previous
+        # run's snapshots are replayed as this run's results whenever the simulation produces
+        # none of its own, which reports the wrong numbers without any error.
+        shutil.rmtree(cache_path, ignore_errors=True)
         os.makedirs(workspace, exist_ok=True)
 
         spec_abs = spec.model_copy(update={"model_cache_path": model_cache_abs})

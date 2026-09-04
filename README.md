@@ -124,6 +124,8 @@ See `docs/ARCHITECTURE.md` for the design and `examples/configs/` for runnable c
 
 ## Notes & limitations
 
+- **NVFlare** accepts built-in models only, since it rebuilds the model from its class
+  path and cannot serialise a torchvision constructor argument.
 - **NVFlare** runs each client in its own simulator process, so client-side hooks at
   `before_client_train` and `after_client_train` do not apply to it. That backend is used
   for cross-framework differential parity of the vanilla FedAvg path. The reference and Flower

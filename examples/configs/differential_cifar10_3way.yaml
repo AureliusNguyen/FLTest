@@ -1,0 +1,22 @@
+# Three-way parity on 3-channel data.
+#
+# The existing three-way example uses MNIST, which is 1-channel and 10-class, and those are
+# the defaults of every built-in model. A backend that lost the real channel and class
+# counts still passed it. This config uses CIFAR-10 so that a lost constructor argument
+# shows up as a failure.
+name: verify_cifar10_3way
+dataset: cifar10
+data_distribution: iid
+model_name: LeNet
+num_clients: 3
+num_rounds: 2
+client_lr: 0.05
+dataset_partitions: 200
+max_test_data_size: 512
+total_cpus: 6
+runs:
+  - {framework: reference, name: reference}
+  - {framework: flwr, name: flower}
+  - {framework: nvflare, name: nvflare}
+testing:
+  differential: {mode: cross_framework, metric: accuracy, tolerance: 0.08}

@@ -32,6 +32,10 @@ class LeNet(nn.Module):
 
     def __init__(self, channels: int = 1, num_classes: int = 10):
         super().__init__()
+        # NVFlare rebuilds a model from its class path and recovers constructor arguments by
+        # reading attributes of the same name off the instance. Without these it falls back
+        # to the defaults, and every client silently gets a 1-channel, 10-class model.
+        self.channels, self.num_classes = channels, num_classes
         self.conv1 = nn.Conv2d(channels, 6, kernel_size=5)
         self.pool = nn.AvgPool2d(kernel_size=2, stride=2)
         self.conv2 = nn.Conv2d(6, 16, kernel_size=5)
@@ -57,6 +61,7 @@ class ConvNet(nn.Module):
 
     def __init__(self, channels: int = 3, num_classes: int = 10):
         super().__init__()
+        self.channels, self.num_classes = channels, num_classes  # see LeNet, for NVFlare
         act = nn.Sigmoid
         self.body = nn.Sequential(
             nn.Conv2d(channels, 12, kernel_size=5, padding=5 // 2, stride=2), act(),
@@ -77,6 +82,8 @@ class MLP(nn.Module):
 
     def __init__(self, channels: int = 1, num_classes: int = 10, input_hw: int = 32):
         super().__init__()
+        self.channels, self.num_classes = channels, num_classes  # see LeNet, for NVFlare
+        self.input_hw = input_hw
         in_features = channels * input_hw * input_hw
         self.net = nn.Sequential(
             nn.Flatten(),

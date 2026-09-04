@@ -64,7 +64,7 @@ so a defense sanitizes a tampered update on the same hook.
 |-----------|:---------:|:-----------------:|:------------------:|-------|
 | reference | ✓ | ✓ | ✓ | the oracle; develop attacks here |
 | flower    | ✓ | ✓ (rebuilt in Ray workers from the spec) | ✓ | aggregates with FLTest's own weighted mean for parity |
-| nvflare   | ✓ (driver) | — (separate processes) | ✓ (replayed snapshots) | differential parity of vanilla FedAvg |
+| nvflare   | ✓ (driver) | — (separate processes) | ✓ (replayed snapshots) | built-in models only; differential parity of vanilla FedAvg |
 
 ## Testing engines
 
