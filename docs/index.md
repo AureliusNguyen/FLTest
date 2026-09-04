@@ -1,4 +1,7 @@
-# FLTest
+<p align="center" markdown>
+![FLTest](assets/svg/fltest-lockup.svg#only-light){ width="430" }
+![FLTest](assets/svg/fltest-lockup-on-maroon.svg#only-dark){ width="430" }
+</p>
 
 ### A Testbed for Enhancing Privacy and Robustness of Federated Learning Systems
 
@@ -91,6 +94,12 @@ under realistic conditions.
   <img src="assets/logos/vt.png" alt="Virginia Tech" style="height:56px; width:auto;">
   <img src="assets/logos/umass.png" alt="University of Massachusetts Amherst" style="height:40px; width:auto;">
 </p>
+
+## Brand
+
+The FLTest mark, wordmark, palette, and their usage notes live in the
+[brand kit](assets/preview.html). The palette is aligned to the Virginia Tech maroon and
+orange, and `assets/css/brand.css` binds those tokens to this site's colours.
 
 ## Acknowledgement
 
