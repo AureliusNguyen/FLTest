@@ -295,7 +295,13 @@ def print_run_matrix(
         summary += f", {total_duration:.1f}s total"
     print(summary)
     for r in failed:
-        first_line = (r.error or "").strip().splitlines()[0] if r.error else "no error recorded"
-        print(f"  {r.run_name} [{r.framework}] failed: {first_line}")
+        # Some libraries raise a message that opens with a blank line, which leaves the
+        # first line holding only the exception name. Carry the next line with content up
+        # so the reason is readable rather than a bare "ImportError:".
+        lines = [line.strip() for line in (r.error or "").splitlines() if line.strip()]
+        reason = lines[0] if lines else "no error recorded"
+        if reason.endswith(":") and len(lines) > 1:
+            reason = f"{reason} {lines[1]}"
+        print(f"  {r.run_name} [{r.framework}] failed: {reason}")
     if report_path:
         print(f"Report: {report_path}")

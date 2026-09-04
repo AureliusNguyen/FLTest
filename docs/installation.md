@@ -30,6 +30,10 @@ pip install -e ".[docs]"      # this documentation site (mkdocs-material)
     tokenizers usable. The `[hf]` extra therefore pins transformers below 5, which works on
     both architectures. Apple Silicon is unaffected and reaches current torch releases.
 
+    torch 2.2.2 also needs `numpy<2`. A fresh environment that installs a current numpy
+    beside it fails on import with a message about NumPy 1.x versus 2.x, which reads as
+    unrelated to the version you actually pinned.
+
 !!! note "Hugging Face versions"
     Dataset ids are namespaced (`uoft-cs/cifar10`), which is required from
     huggingface-hub 1.16 onward and works on earlier versions too. If a Hub call fails in
@@ -49,7 +53,7 @@ fltest list
 # Defenses:   ['gradient_noise', 'krum', 'median', 'norm_clip', 'trimmed_mean']
 # Metrics:    ['accuracy', 'loss', 'per_client']
 
-pytest tests/ -q          # 56 passing
+pytest tests/ -q          # 57 passing
 ```
 
 `fltest list` and `fltest pitfalls` return immediately, because neither needs to load a
