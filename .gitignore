@@ -53,8 +53,8 @@ htmlcov/
 
 # ---- FLTest runtime output (regenerated; can be large) ----
 # data/ holds dataset + model + framework caches; reports/ holds JSON run/test reports.
-data/
-reports/
+/data/
+/reports/
 tmp/
 validation_results/
 nvflare_workspace/
