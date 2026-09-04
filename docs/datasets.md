@@ -23,8 +23,13 @@ A name FLTest does not recognise is treated as a Hub id. Its metadata is read to
 image column and the label column, and the class count follows from the label feature.
 
 ```yaml
-dataset: zalando-datasets/fashion_mnist
+dataset: uoft-cs/cifar100
 ```
+
+A Hub id must be written as `namespace/name`. huggingface-hub 1.16 removed the bare form,
+so `cifar10` on its own raises `HfUriError` on a machine that has not cached it already.
+FLTest says so rather than letting the Hub error through. The built-in short names are
+unaffected, since each maps to a namespaced id internally.
 
 Only the dataset card and feature schema are fetched for this, not the data. A dataset
 without exactly one image column and one labelled class column raises an error naming the

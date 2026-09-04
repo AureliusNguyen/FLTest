@@ -23,6 +23,12 @@ pip install -e ".[hf]"        # Hugging Face models via `model_name: hf:<id>`
 pip install -e ".[docs]"      # this documentation site (mkdocs-material)
 ```
 
+!!! note "Hugging Face versions"
+    Dataset ids are namespaced (`uoft-cs/cifar10`), which is required from
+    huggingface-hub 1.16 onward and works on earlier versions too. If a Hub call fails in
+    another way, check `huggingface-hub`, `datasets`, and `transformers` against each
+    other before suspecting FLTest.
+
 !!! note "Why Python 3.11"
     NVFlare does not yet support Python 3.12+. The core (reference + Flower) works on
     3.10–3.12, but the env is pinned to 3.11 so the NVFlare extra installs cleanly.
@@ -36,7 +42,7 @@ fltest list
 # Defenses:   ['gradient_noise', 'krum', 'median', 'norm_clip', 'trimmed_mean']
 # Metrics:    ['accuracy', 'loss', 'per_client']
 
-pytest tests/ -q          # 54 passing
+pytest tests/ -q          # 56 passing
 ```
 
 `fltest list` and `fltest pitfalls` return immediately, because neither needs to load a
