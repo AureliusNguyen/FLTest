@@ -68,22 +68,35 @@ conda env create -f environment.yml      # creates env "fltest" (Python 3.11)
 conda activate fltest
 pip install -e ".[dev]"                   # core (reference + Flower) + test tooling
 pip install -e ".[nvflare]"               # optional NVFlare backend (needs Python <=3.11)
+pip install -e ".[hf]"                    # optional Hugging Face models and text datasets
 ```
 
 CPU is the default and is deterministic; `device: mps` (Apple Silicon) or `device: cuda`
 are selectable for speed (with the usual GPU non-determinism caveat).
 
+An Intel Mac constrains the Hugging Face extra, because PyTorch publishes no macOS x86_64
+wheel past 2.2.2. See [installation](docs/installation.md) for what that pins.
+
 ## Use
 
 ```bash
-fltest list                                              # available frameworks/attacks/defenses/metrics
-fltest run         examples/configs/differential.yaml
-fltest diff        examples/configs/differential_3way.yaml   # cross-framework parity
+fltest list          # available frameworks/attacks/defenses/metrics
+
+# the attack and defense matrix, on CIFAR-10, with two privacy scenarios
+fltest run examples/configs/exhaustive_eval.yaml
+
+# privacy: what the model leaks, and what DP noise costs to stop it
+fltest run examples/configs/membership_inference.yaml
+fltest run examples/configs/dlg.yaml               # gradient inversion
+
+# heterogeneity: one client per real writer, and one topic per client
+fltest run examples/configs/femnist_natural.yaml
+fltest run examples/configs/text_domains.yaml      # needs the [hf] extra
+
+# the testing engines
+fltest diff        examples/configs/differential_cifar10_3way.yaml
 fltest metamorphic examples/configs/metamorphic.yaml
 fltest pitfalls    examples/configs/pitfalls_demo.yaml
-fltest run         examples/configs/attack_label_flip.yaml
-fltest run         examples/configs/dlg.yaml                  # privacy attack
-fltest run         examples/configs/defense_robust.yaml      # backdoor vs median agg
 ```
 
 Loadable hook files (slide-style), no config edits:
