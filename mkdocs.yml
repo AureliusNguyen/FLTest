@@ -8,14 +8,24 @@ copyright: >
   Award #2452817-19. PIs: Fatima Anwar (UMass Amherst), Muhammad Ali Gulzar (Virginia Tech),
   Ali Anwar (University of Minnesota).
 docs_dir: docs
+
+extra_css:
+  - assets/css/brand.css
 theme:
   name: material
+  # The mark is white and orange, which is what reads on the maroon header bar.
+  logo: assets/svg/fltest-mark-on-maroon.svg
+  favicon: assets/png/fltest-favicon-32.png
+  # `custom` leaves the colours to assets/css/brand.css, which binds the FLTest tokens to
+  # Material's variables for both schemes. Naming a built-in palette here would fight it.
   palette:
     - scheme: default
-      primary: indigo
+      primary: custom
+      accent: custom
       toggle: { icon: material/weather-night, name: Dark mode }
     - scheme: slate
-      primary: indigo
+      primary: custom
+      accent: custom
       toggle: { icon: material/weather-sunny, name: Light mode }
   features:
     - navigation.sections

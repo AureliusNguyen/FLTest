@@ -1,4 +1,10 @@
-# FLTest
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)"
+            srcset="docs/assets/png/fltest-lockup-on-maroon-1600.png">
+    <img src="docs/assets/png/fltest-lockup-1600.png" alt="FLTest" width="430">
+  </picture>
+</p>
 
 **A testbed for evaluating the privacy and robustness of Privacy-Preserving Federated
 Learning (PPFL).** FLTest gives *software-defined control and visibility* into FL testing.

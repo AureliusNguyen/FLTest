@@ -5,6 +5,18 @@ versioning](https://semver.org). The patch number changes for a fix and the mino
 for new capability that leaves existing configs working. The major number changes when the
 configuration schema or the plugin API breaks.
 
+## 0.3.1
+
+**Branding.** The documentation site now carries the FLTest identity. `brand.css` is loaded
+as `extra_css`, and it binds the maroon, orange, and stone tokens to Material's variables
+for both the light and dark schemes. The palette is declared as `custom` so those tokens
+govern the colours, since naming a built-in Material palette would fight them.
+
+The header uses the white and orange mark, which is the variant drawn to read on maroon,
+and the favicon comes from the same set. The home page and the README show the full lockup
+and swap it by colour scheme, through `#only-light` and `#only-dark` on the site and a
+`<picture>` element on GitHub. The brand kit itself is linked from the home page.
+
 ## 0.3.0
 
 **Text.** Added `ag_news` and the plumbing federated text needs. A dataset now declares its
