@@ -5,6 +5,18 @@ versioning](https://semver.org). The patch number changes for a fix and the mino
 for new capability that leaves existing configs working. The major number changes when the
 configuration schema or the plugin API breaks.
 
+## 0.4.8
+
+**README.** The highlights advertised text datasets and Hugging Face models, but the
+install block never mentioned the `[hf]` extra that provides them, so a reader following
+the README could not reach a feature it promised. It is listed now, with a pointer to what
+an Intel Mac pins.
+
+The command list also predated most of the examples. It now covers the attack and defense
+matrix, both privacy attacks, FEMNIST partitioned by writer, and federated text, and its
+differential example is the CIFAR-10 three-way rather than the MNIST one, which cannot
+catch a backend that loses the channel count.
+
 ## 0.4.7
 
 **Fixed.** A run that failed because transformers had disabled its PyTorch backend reported
