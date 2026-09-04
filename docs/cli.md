@@ -19,7 +19,17 @@ fltest <command> [args]
 | Option | Default | Meaning |
 |--------|---------|---------|
 | `-o, --output DIR` | `reports` | directory for the JSON report |
-| `-v, --verbose` | off | show framework/Ray/HF logs (otherwise INFO is suppressed) |
+| `-v, --verbose` | off | show framework/Ray/NVFlare/Hugging Face logs |
+
+Without `-v`, FLTest sets `FL_LOG_LEVEL=ERROR`, `TRANSFORMERS_VERBOSITY=error`, and
+`RAY_DEDUP_LOGS=1` for the run. These are environment variables rather than logging calls
+because Ray and NVFlare work in separate processes, and a child inherits the environment
+but not a `logging.disable` from the parent. Each is set with a default, so a value already
+in your environment wins.
+
+One line survives on NVFlare runs, a `resource_tracker` warning about a leaked semaphore at
+shutdown. It comes from NVFlare's own cleanup, it is harmless, and FLTest leaves it visible
+rather than hiding a resource warning that is not its to suppress.
 
 ## Exit codes
 
