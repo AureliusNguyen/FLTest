@@ -16,7 +16,9 @@ from fltest.core.config import TestConfig
 # Attacks the proposal flags as "naive" (Pitfall-1): over-used, weak under strong settings.
 NAIVE_ATTACKS = {"gaussian", "label_flip", "sign_flip"}
 # Class-balanced datasets that don't represent real-world heterogeneity (Pitfall-2).
-BALANCED_DATASETS = {"mnist", "fashion_mnist", "cifar10"}
+# FEMNIST is deliberately absent: it is writer-partitioned and naturally non-IID, so a
+# config that uses it clears this pitfall.
+BALANCED_DATASETS = {"mnist", "fashion_mnist", "cifar10", "cifar100"}
 PRIVACY_ATTACKS = {"dlg"}  # gradient-inversion / inference style
 
 
@@ -72,13 +74,13 @@ def check_config(config: TestConfig) -> List[Finding]:
         findings.append(Finding(
             "P2_dataset", "MNIST-only evaluation", "medium",
             "Only MNIST is used; it under-represents real-world complexity/heterogeneity.",
-            "Add a harder/real-world dataset and non-IID partitioning.",
+            "Add a harder dataset such as 'cifar100', or 'femnist' for real-world skew.",
             {"datasets": sorted(datasets)}))
     elif datasets and datasets <= BALANCED_DATASETS:
         findings.append(Finding(
             "P2_dataset", "Class-balanced datasets only", "low",
             "All datasets are class-balanced; they don't reflect real-world label imbalance.",
-            "Include a naturally non-IID/real-world dataset where available.",
+            "Add 'femnist', which is partitioned by writer and naturally non-IID.",
             {"datasets": sorted(datasets)}))
 
     # P3 — Standardization of procedures & metrics (IID-only + no personalized eval).

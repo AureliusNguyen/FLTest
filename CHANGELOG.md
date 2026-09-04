@@ -5,6 +5,32 @@ versioning](https://semver.org). The patch number changes for a fix and the mino
 for new capability that leaves existing configs working. The major number changes when the
 configuration schema or the plugin API breaks.
 
+## 0.2.0
+
+**Datasets.** Added `cifar100` and `femnist`. FEMNIST is the answer to Pitfall-2, since it
+labels every character by the writer who produced it, and the new `natural` partitioner
+gives each client one real writer instead of a synthetic shard. A dataset name FLTest does
+not recognise is now treated as a Hugging Face id and described from its metadata, so any
+Hub image-classification dataset works without a code change. A dataset that ships no test
+split, as FEMNIST does, gets 10,000 examples held out under a fixed seed before
+partitioning, because slicing the test set out of the client shards would evaluate the
+global model on data its own clients trained on.
+
+**Models.** Added the torchvision architectures `ResNet18`, `ResNet34`, `ResNet50`,
+`VGG11`, `MobileNetV3`, and `EfficientNetB0`, each adapted to the dataset's channel count,
+with the ResNet stem replaced by the 3x3 CIFAR variant. A name written as `hf:<id>` is
+fetched from the Hugging Face Hub through timm or transformers, which installs with
+`pip install -e ".[hf]"`.
+
+**Pitfall checker.** CIFAR-100 joins the class-balanced set and FEMNIST is deliberately
+outside it, so `dataset: femnist` now clears `P2_dataset` rather than downgrading it. The
+recommender suggests FEMNIST, which previously proposed a counter-experiment that could not
+clear the pitfall it was answering.
+
+**Fixed.** The deterministic initial-weight cache was keyed on model name and channel count
+alone. Adding CIFAR-100 exposed it: a 10-class head would have been loaded into a 100-class
+model. The key now carries the class count.
+
 ## 0.1.0
 
 First versioned release. It covers Tasks 1 to 3 of the project plan, which are automated

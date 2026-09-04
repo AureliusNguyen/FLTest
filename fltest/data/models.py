@@ -1,8 +1,14 @@
 """Model zoo + train/test loops shared across FLTest framework adapters.
 
 Models are deterministic when built through :func:`get_model` with ``deterministic=True``:
-the initial weights are cached per ``(model, channels)`` so every client/framework starts
-from identical parameters — a prerequisite for cross-framework differential testing.
+the initial weights are cached per ``(model, channels, num_classes)``, so every client and
+every framework starts from identical parameters. That is a prerequisite for
+cross-framework differential testing.
+
+Three kinds of name are accepted. A built-in such as ``LeNet`` comes from
+:data:`MODEL_REGISTRY`, a torchvision architecture such as ``ResNet18`` comes from
+:data:`TORCHVISION_MODELS`, and ``hf:<id>`` is fetched from the Hugging Face Hub through
+timm or transformers (install with ``pip install -e ".[hf]"``).
 """
 
 from __future__ import annotations
@@ -89,9 +95,100 @@ MODEL_REGISTRY = {
     "MLP": MLP,
 }
 
+#: FLTest name -> torchvision architecture. torchvision is a core dependency, so these
+#: need no extra install. Every one is built from scratch, never with pretrained weights,
+#: because federated training starts from a shared random initialisation.
+TORCHVISION_MODELS = {
+    "ResNet18": "resnet18",
+    "ResNet34": "resnet34",
+    "ResNet50": "resnet50",
+    "VGG11": "vgg11",
+    "MobileNetV3": "mobilenet_v3_small",
+    "EfficientNetB0": "efficientnet_b0",
+}
+
+#: Prefix that routes a model name to the Hugging Face Hub, e.g. ``hf:timm/resnet18``.
+HF_PREFIX = "hf:"
+
 
 def list_models() -> List[str]:
-    return sorted(MODEL_REGISTRY)
+    """Built-in and torchvision names. Hub models are named ``hf:<id>`` and not listed."""
+    return sorted(list(MODEL_REGISTRY) + list(TORCHVISION_MODELS))
+
+
+def _adapt_first_conv(model: nn.Module, channels: int) -> None:
+    """Rebuild the first convolution when the dataset has a different channel count.
+
+    torchvision architectures assume 3-channel input, so a grayscale dataset such as MNIST
+    or FEMNIST needs the stem replaced. The replacement keeps every other property of the
+    original layer.
+    """
+    for name, module in model.named_modules():
+        if isinstance(module, nn.Conv2d):
+            if module.in_channels == channels:
+                return
+            replacement = nn.Conv2d(
+                channels, module.out_channels, kernel_size=module.kernel_size,
+                stride=module.stride, padding=module.padding, bias=module.bias is not None,
+            )
+            parent = model
+            parts = name.split(".")
+            for part in parts[:-1]:
+                parent = getattr(parent, part)
+            setattr(parent, parts[-1], replacement)
+            return
+
+
+def _build_torchvision(tv_name: str, channels: int, num_classes: int) -> nn.Module:
+    from torchvision import models as tv_models
+
+    model = tv_models.get_model(tv_name, weights=None, num_classes=num_classes)
+    if tv_name.startswith("resnet"):
+        # The ImageNet stem downsamples 7x7 stride 2 then max-pools, which leaves almost
+        # nothing of a 32x32 input. Use the standard CIFAR stem instead.
+        model.conv1 = nn.Conv2d(channels, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        model.maxpool = nn.Identity()
+    else:
+        _adapt_first_conv(model, channels)
+    return model
+
+
+class _HFImageClassifier(nn.Module):
+    """Wrap a transformers image classifier so it returns logits like every other model."""
+
+    def __init__(self, inner: nn.Module):
+        super().__init__()
+        self.inner = inner
+
+    def forward(self, x):
+        return self.inner(pixel_values=x).logits
+
+
+def _build_hf(model_id: str, channels: int, num_classes: int) -> nn.Module:
+    """Build a Hub model by id, trying timm first and then transformers."""
+    try:
+        import timm
+    except ImportError:
+        timm = None
+    if timm is not None:
+        try:
+            return timm.create_model(
+                model_id.removeprefix("timm/"), pretrained=False,
+                num_classes=num_classes, in_chans=channels,
+            )
+        except Exception:
+            pass  # not a timm architecture, so fall through to transformers
+    try:
+        from transformers import AutoConfig, AutoModelForImageClassification
+    except ImportError as exc:
+        raise ImportError(
+            f"Loading '{HF_PREFIX}{model_id}' needs the Hugging Face extra. Install it with "
+            f'pip install -e ".[hf]"'
+        ) from exc
+    config = AutoConfig.from_pretrained(model_id, num_labels=num_classes)
+    if hasattr(config, "num_channels"):
+        config.num_channels = channels
+    return _HFImageClassifier(AutoModelForImageClassification.from_config(config))
 
 
 def model_weight_sum(model: nn.Module) -> float:
@@ -99,9 +196,13 @@ def model_weight_sum(model: nn.Module) -> float:
     return sum(p.sum().item() for p in model.parameters())
 
 
-def _cached_initial_state(cache_dir: str, name: str, model: nn.Module, channels: int):
+def _cached_initial_state(
+    cache_dir: str, name: str, model: nn.Module, channels: int, num_classes: int
+):
     cache = Index(cache_dir)
-    key = f"{name}-channels{channels}"
+    # num_classes belongs in the key: the classifier head is sized by it, so caching on
+    # (name, channels) alone would hand a 10-class state to a 100-class model.
+    key = f"{name}-channels{channels}-classes{num_classes}"
     state = cache.get(key)
     if state is None:
         state = model.state_dict()
@@ -126,13 +227,23 @@ def get_model(
         deterministic: if True, load/store a fixed initial state so all
             clients/frameworks start identically.
     """
-    if model_name not in MODEL_REGISTRY:
-        raise ValueError(f"Unknown model '{model_name}'. Available: {list_models()}")
-    model = MODEL_REGISTRY[model_name](channels=channels, num_classes=num_classes)
+    if model_name in MODEL_REGISTRY:
+        model = MODEL_REGISTRY[model_name](channels=channels, num_classes=num_classes)
+    elif model_name in TORCHVISION_MODELS:
+        model = _build_torchvision(TORCHVISION_MODELS[model_name], channels, num_classes)
+    elif model_name.startswith(HF_PREFIX):
+        model = _build_hf(model_name[len(HF_PREFIX):], channels, num_classes)
+    else:
+        raise ValueError(
+            f"Unknown model '{model_name}'. Available: {list_models()}, or any Hugging Face "
+            f"id written as '{HF_PREFIX}<id>'."
+        )
     if deterministic:
         if not model_cache_dir:
             raise ValueError("model_cache_dir is required when deterministic=True")
-        model.load_state_dict(_cached_initial_state(model_cache_dir, model_name, model, channels))
+        model.load_state_dict(
+            _cached_initial_state(model_cache_dir, model_name, model, channels, num_classes)
+        )
     return model
 
 

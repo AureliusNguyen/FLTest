@@ -1,0 +1,21 @@
+# FEMNIST partitioned the way the data actually is: one client per writer.
+#
+# This is the counter-experiment for Pitfall-2. MNIST, Fashion-MNIST, CIFAR-10, and
+# CIFAR-100 are class balanced, so a defense evaluated only on them is never tested
+# against real-world skew. FEMNIST labels each character by the writer who produced it,
+# and `data_distribution: natural` gives every client one writer's handwriting.
+name: femnist_natural
+dataset: femnist
+data_distribution: natural
+model_name: LeNet
+num_clients: 40
+num_rounds: 10
+client_lr: 0.001
+client_epochs: 3
+optimizer: Adam
+dataset_partitions: 60
+total_cpus: 6
+metrics: [accuracy, loss, per_client]
+
+runs:
+  - {framework: reference, name: femnist}

@@ -48,6 +48,11 @@ makes a rigorous setup the default and *checks* for the common pitfalls.
   and emits copy-pasteable counter-experiments.
 - **Config fuzzer:** any list-valued knob (e.g. `dataset: [mnist, cifar10]`) is expanded
   into a grid of runs.
+- **Datasets:** `mnist`, `fashion_mnist`, `cifar10`, `cifar100`, and `femnist`, which is
+  partitioned by writer and naturally non-IID. Any Hugging Face image-classification id
+  also works by name.
+- **Models:** built-in `LeNet` / `ConvNet` / `MLP`, torchvision architectures such as
+  `ResNet18` and `MobileNetV3`, and Hub models written as `hf:<id>`.
 
 ## Install (isolated conda env)
 
