@@ -9,9 +9,11 @@ dataset: cifar10
 data_distribution: iid
 model_name: LeNet
 num_clients: 3
-num_rounds: 2
-client_lr: 0.05
-dataset_partitions: 200
+num_rounds: 5
+client_epochs: 2
+client_lr: 0.001
+optimizer: Adam
+dataset_partitions: 60
 max_test_data_size: 512
 total_cpus: 6
 runs:
