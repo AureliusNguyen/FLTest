@@ -30,6 +30,12 @@ The test subset size is `max_test_data_size`. These three appear in `final` for 
 Add `per_client` to `metrics:` to enable personalized evaluation. Attack metrics appear
 automatically when the relevant attack is configured.
 
+## Run parameters recorded beside the metrics
+
+Each run's `params` in the JSON report carries its fully resolved settings, which includes
+`aggregation`. That names `fedavg` or the robust rule that replaced it, since a
+robust-aggregation defense substitutes the rule rather than perturbing an update.
+
 ## Where metrics live
 
 - `result.history[round]` — dict of metrics for that round.

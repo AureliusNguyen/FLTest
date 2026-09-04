@@ -68,3 +68,21 @@ def test_listing_the_catalog_does_not_import_torch():
         "sys.exit(1 if 'torch' in sys.modules else 0)"
     )
     assert subprocess.run([sys.executable, "-c", code]).returncode == 0
+
+
+def test_aggregation_names_the_rule_that_combines_updates():
+    """FedAvg unless a robust-aggregation defense replaces it at before_aggregate."""
+    from fltest.core.config import RunSpec
+
+    plain = RunSpec(run_id="a", run_name="a", framework="reference")
+    assert plain.aggregation() == "fedavg"
+
+    robust = RunSpec(run_id="b", run_name="b", framework="reference",
+                     defenses=[{"name": "median"}])
+    assert robust.aggregation() == "median"
+    assert robust.summary()["aggregation"] == "median"
+
+    # A perturbation defense leaves the aggregation rule alone.
+    noised = RunSpec(run_id="c", run_name="c", framework="reference",
+                     defenses=[{"name": "gradient_noise"}])
+    assert noised.aggregation() == "fedavg"

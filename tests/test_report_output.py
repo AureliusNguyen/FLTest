@@ -15,7 +15,7 @@ def _result(name, framework="reference", status="success", error=None, **final):
             "dirichlet_alpha": None, "model_name": "MLP", "num_clients": 4,
             "num_rounds": 3, "seed": 786, "attacks": [], "defenses": [],
         },
-        final=final,
+        final=final, history={},
     )
 
 
@@ -61,3 +61,43 @@ def test_failed_run_is_reported_with_status_and_reason(capsys):
 def test_empty_matrix_does_not_crash(capsys):
     print_run_matrix("demo", [])
     assert "no runs" in capsys.readouterr().out
+
+
+def test_aggregation_rule_is_named_in_the_output(capsys):
+    """A robust-aggregation defense replaces FedAvg, so the table has to say which ran."""
+    plain = _result("plain", accuracy=0.9)
+    robust = _result("robust", accuracy=0.9)
+    plain.params["aggregation"] = "fedavg"
+    robust.params["aggregation"] = "median"
+
+    print_run_matrix("demo", [plain, robust])
+    out = capsys.readouterr().out
+    assert "aggregation" in out and "fedavg" in out and "median" in out
+
+
+def test_shortened_columns_are_explained(capsys):
+    r = _result("r", accuracy=0.9, attack_success_rate=0.4, membership_inference_auc=0.66)
+    print_run_matrix("demo", [r])
+    out = capsys.readouterr().out
+
+    assert "columns:" in out
+    assert "attack success rate" in out          # asr
+    assert "membership inference AUC" in out     # mia-auc
+    assert "0.5 is no leakage" in out
+
+
+def test_per_round_trace_shows_progress(capsys):
+    r = _result("r", accuracy=0.9)
+    r.history = {1: {"accuracy": 0.5}, 2: {"accuracy": 0.7}, 3: {"accuracy": 0.9}}
+    print_run_matrix("demo", [r])
+    out = capsys.readouterr().out
+
+    assert "per-round accuracy:" in out
+    assert "0.5000 -> 0.7000 -> 0.9000" in out
+
+
+def test_single_round_run_has_no_trace(capsys):
+    r = _result("r", accuracy=0.9)
+    r.history = {1: {"accuracy": 0.9}}
+    print_run_matrix("demo", [r])
+    assert "per-round accuracy:" not in capsys.readouterr().out

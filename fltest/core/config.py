@@ -73,6 +73,9 @@ class TestingSpec(BaseModel):
     metamorphic: List[MetamorphicRelation] = Field(default_factory=list)
 
 
+#: Defenses that replace the aggregation rule rather than perturbing a client update.
+ROBUST_AGGREGATORS = ("krum", "trimmed_mean", "median")
+
 # Knobs that participate in config fuzzing when given as a list.
 FUZZABLE_KNOBS = (
     "dataset",
@@ -160,6 +163,18 @@ class RunSpec(BaseModel):
             return {"classes_per_partition": self.classes_per_partition}
         return {}
 
+    def aggregation(self) -> str:
+        """Name the rule that combines client updates.
+
+        FedAvg is the default everywhere. A robust-aggregation defense replaces it at
+        ``before_aggregate``, and that substitution is the whole point of configuring one,
+        so it belongs in the report rather than being inferred from the defense list.
+        """
+        for defense in self.defenses:
+            if defense.name in ROBUST_AGGREGATORS:
+                return defense.name
+        return "fedavg"
+
     def summary(self) -> Dict[str, Any]:
         """Compact, fully-resolved parameter annotation for reports and logs.
 
@@ -175,6 +190,7 @@ class RunSpec(BaseModel):
                 self.classes_per_partition if self.data_distribution == "pathological" else None
             ),
             "model_name": self.model_name,
+            "aggregation": self.aggregation(),
             "num_clients": self.num_clients,
             "num_rounds": self.num_rounds,
             "client_epochs": self.client_epochs,

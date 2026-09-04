@@ -78,6 +78,7 @@ _PARAM_COLUMNS = [
     ("dirichlet_alpha", "alpha"),
     ("classes_per_partition", "cls/client"),
     ("model_name", "model"),
+    ("aggregation", "aggregation"),
     ("num_clients", "clients"),
     ("num_rounds", "rounds"),
     ("client_epochs", "epochs"),
@@ -112,6 +113,23 @@ _METRIC_HEADERS = {
     "reconstruction_mse": "rec-mse",
     "reconstruction_psnr": "rec-psnr",
     "label_recovery": "label-rec",
+    "membership_inference_auc": "mia-auc",
+    "membership_loss_gap": "mia-gap",
+}
+
+#: What each shortened column means, printed under the table for the metrics in play. A
+#: reader should not have to open the source to learn what `asr` or `mia-auc` is.
+_METRIC_GLOSS = {
+    "accuracy": "top-1 accuracy of the global model on the held-out test set",
+    "loss": "mean cross-entropy on the same test set",
+    "attack_success_rate": "attack success rate, the share of triggered inputs predicted as the attacker's target label",
+    "per_client_acc_mean": "per-client accuracy, averaged over clients",
+    "per_client_acc_min": "per-client accuracy of the worst-served client",
+    "reconstruction_mse": "pixel mean-squared error of the DLG reconstruction, lower means a better reconstruction and worse privacy",
+    "reconstruction_psnr": "peak signal-to-noise ratio of that reconstruction, higher means a better reconstruction",
+    "label_recovery": "share of the victim's labels the attack recovered",
+    "membership_inference_auc": "membership inference AUC, the chance a training sample looks more member-like than a held-out one; 0.5 is no leakage",
+    "membership_loss_gap": "held-out loss minus training loss, the overfitting gap membership inference exploits",
 }
 
 #: Width the fixed-settings block wraps at, independent of how wide the table is.
@@ -244,6 +262,31 @@ def print_run_matrix(
     for row in rows:
         print(_line(row))
     print(rule)
+
+    # Per-round trace of the headline metric, so the table shows how a run got where it
+    # did rather than only where it ended.
+    traced = [r for r in results if len(getattr(r, "history", None) or {}) > 1]
+    if traced and metrics:
+        headline = metrics[0]
+        print(f"per-round {headline}:")
+        for r in traced:
+            rounds = sorted(r.history, key=lambda k: int(k))
+            values = [r.history[k].get(headline) for k in rounds]
+            shown = [_fmt_metric(headline, v) for v in values if v is not None]
+            if len(shown) > 12:
+                shown = shown[:6] + ["..."] + shown[-5:]
+            print(f"  {r.run_name:<{widths[0]}}  " + " -> ".join(shown))
+        print(rule)
+
+    # Legend, so the shortened headers and the less obvious metrics explain themselves.
+    glossed = [m for m in metrics if m in _METRIC_GLOSS]
+    if glossed:
+        print("columns:")
+        for metric in glossed:
+            print(f"  {_METRIC_HEADERS.get(metric, metric):<10} {_METRIC_GLOSS[metric]}")
+        print(f"  {'time':<10} wall-clock duration of the run")
+        print("metrics are from the final round; per-round history is in the JSON report.")
+        print(rule)
 
     summary = f"{len(results)} run{'s' if len(results) != 1 else ''}"
     if failed:
