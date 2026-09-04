@@ -5,14 +5,49 @@ FLTest loads and partitions datasets with [`flwr-datasets`](https://flower.ai/do
 
 ## Built-in datasets
 
-| Name | Channels | Classes | Image column | Notes |
-|------|:--------:|:-------:|--------------|-------|
-| `mnist` | 1 | 10 | `image` | handwritten digits |
-| `fashion_mnist` | 1 | 10 | `image` | clothing; harder than MNIST, same shape |
-| `cifar10` | 3 | 10 | `img` | natural images (RGB) |
+| Name | Channels | Classes | Notes |
+|------|:--------:|:-------:|-------|
+| `mnist` | 1 | 10 | handwritten digits |
+| `fashion_mnist` | 1 | 10 | clothing; harder than MNIST, same shape |
+| `cifar10` | 3 | 10 | natural images (RGB) |
+| `cifar100` | 3 | 100 | 100 fine-grained classes; labels live in `fine_label` |
+| `femnist` | 1 | 62 | handwritten characters **labelled by writer**; naturally non-IID |
 
-Use one with `dataset: cifar10`, or fuzz several with `dataset: [mnist, fashion_mnist, cifar10]`.
-Channels and class count are derived automatically — you never set them by hand.
+Use one with `dataset: cifar10`, or fuzz several with `dataset: [mnist, cifar100, femnist]`.
+Channels and class count are derived automatically, so you never set them by hand.
+
+### Any Hugging Face dataset
+
+A name FLTest does not recognise is treated as a Hub id. Its metadata is read to find the
+image column and the label column, and the class count follows from the label feature.
+
+```yaml
+dataset: zalando-datasets/fashion_mnist
+```
+
+Only the dataset card and feature schema are fetched for this, not the data. A dataset
+without exactly one image column and one labelled class column raises an error naming the
+columns it did find, and the fix is an explicit entry in `DATASET_CONFIG`.
+
+### FEMNIST and the balanced-dataset pitfall
+
+MNIST, Fashion-MNIST, CIFAR-10, and CIFAR-100 are class balanced, so the pitfall checker
+flags a configuration that uses only those (`P2_dataset`). FEMNIST is the way out. Each
+character carries the id of the writer who produced it, so `data_distribution: natural`
+gives every client one real person's handwriting rather than a synthetic shard.
+
+```bash
+fltest run examples/configs/femnist_natural.yaml
+```
+
+That example trains 40 writers for 10 rounds and reports 0.2656 global accuracy against a
+1/62 chance baseline. The per-client numbers are the point: mean accuracy is 0.2623 while
+the worst-served writer sits at 0.0599, which is the representation disparity a single
+global number hides.
+
+FEMNIST publishes only a train split, so FLTest holds out 10,000 examples with a fixed seed
+before partitioning. Carving the test set out of the client shards instead would evaluate
+the global model on data its own clients trained on.
 
 Grayscale datasets are resized to 32×32 and normalized to mean/std 0.5; RGB datasets are
 normalized per-channel to 0.5. (Defined in `_TRANSFORMS`.)
@@ -24,6 +59,11 @@ normalized per-channel to 0.5. (Defined in `_TRANSFORMS`.)
 | `iid` | uniform random split; every client sees all classes | — |
 | `dirichlet` | label skew across clients | `dirichlet_alpha` (lower ⇒ more skewed) |
 | `pathological` | each client gets only N classes | `classes_per_partition` |
+| `natural` | one client per real-world id in the data | dataset must define one |
+
+`natural` works only on a dataset that carries a client column, which today means FEMNIST
+and its `writer_id`. Asking for it elsewhere raises an error naming the datasets that
+support it.
 
 Non-IID partitioning is how you stress robustness/privacy realistically (the project's
 Pitfall-2/3). Example:

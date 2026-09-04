@@ -17,7 +17,8 @@ _COUNTER_EXPERIMENTS: Dict[str, str] = {
         "  - {name: backdoor, params: {target_label: 0, infection_rate: 0.3}}\n"
         "  - {name: dlg, params: {target_round: 1}}"
     ),
-    "P2_dataset": "dataset: [mnist, cifar10]\ndata_distribution: [iid, dirichlet]",
+    # femnist is writer-partitioned, so it clears P2 outright rather than downgrading it.
+    "P2_dataset": "dataset: [mnist, cifar100, femnist]\ndata_distribution: [iid, dirichlet]",
     "P3_iid_only": "data_distribution: [iid, dirichlet, pathological]",
     "P3_no_personalized": "metrics: [accuracy, loss, per_client]",
     "P4_misconfig_dp": (

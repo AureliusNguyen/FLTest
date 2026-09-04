@@ -67,7 +67,7 @@ testing:
 | Key | Default | Notes |
 |-----|---------|-------|
 | `dataset` | `mnist` | see [Datasets](datasets.md) |
-| `data_distribution` | `iid` | `iid`, `dirichlet` (label skew), `pathological` (N classes/client) |
+| `data_distribution` | `iid` | `iid`, `dirichlet` (label skew), `pathological` (N classes/client), `natural` (one client per real-world id) |
 | `dirichlet_alpha` | 0.5 | only used when distribution is `dirichlet`; lower ⇒ more heterogeneous |
 | `classes_per_partition` | 2 | only used when distribution is `pathological` |
 | `dataset_partitions` | 100 | the dataset is split into this many shards; the first `num_clients` are used. Keep it fixed while sweeping `num_clients` so per-client data size is comparable. |
@@ -76,7 +76,20 @@ testing:
 ### Model
 | Key | Default | Options |
 |-----|---------|---------|
-| `model_name` | `LeNet` | `LeNet` (32×32 conv), `ConvNet` (smooth activations, for DLG), `MLP` (fast) |
+| `model_name` | `LeNet` | built-in, torchvision, or a Hugging Face id (see below) |
+
+Three kinds of name are accepted:
+
+- **Built-in**: `LeNet` (32×32 conv), `ConvNet` (smooth activations, required for DLG), `MLP` (fast).
+- **torchvision**: `ResNet18`, `ResNet34`, `ResNet50`, `VGG11`, `MobileNetV3`, `EfficientNetB0`.
+  These need no extra install. The first convolution is rebuilt for the dataset's channel
+  count, and the ResNet stem is swapped for the 3×3 CIFAR variant, since the ImageNet stem
+  leaves almost nothing of a 32×32 input.
+- **Hugging Face**: `hf:timm/resnet18` or `hf:google/vit-base-patch16-224`, which needs
+  `pip install -e ".[hf]"`. timm is tried first, then transformers.
+
+Weights are always randomly initialised, never pretrained, because federated training has
+to start from one shared initialisation across every client and framework.
 
 ### FL parameters
 | Key | Default | Notes |

@@ -19,6 +19,7 @@ The core install pulls PyTorch (CPU/MPS wheels on macOS, CPU/CUDA on Linux), Flo
 
 ```bash
 pip install -e ".[nvflare]"   # NVFlare backend (requires Python <= 3.11)
+pip install -e ".[hf]"        # Hugging Face models via `model_name: hf:<id>`
 pip install -e ".[docs]"      # this documentation site (mkdocs-material)
 ```
 
@@ -35,7 +36,7 @@ fltest list
 # Defenses:   ['gradient_noise', 'krum', 'median', 'norm_clip', 'trimmed_mean']
 # Metrics:    ['accuracy', 'loss', 'per_client']
 
-pytest tests/ -q          # 15 passing
+pytest tests/ -q          # 31 passing
 ```
 
 `fltest list` and `fltest pitfalls` return immediately, because neither needs to load a

@@ -122,8 +122,8 @@ fltest pitfalls examples/configs/exhaustive_eval.yaml
 ```
 
 The checker reads the per-run attacks, so it does **not** complain about missing threat
-models — but it correctly flags that this matrix is still MNIST-only, IID-only, and has no
-privacy (DLG) attack, and prints copy-pasteable counter-experiments to fix each. Apply them
+models. It correctly flags that this matrix is still MNIST-only, IID-only, and carries no
+privacy (DLG) attack, and it prints copy-pasteable counter-experiments for each finding. Apply them
 (e.g. `dataset: [mnist, cifar10]`, `data_distribution: [iid, dirichlet]`, add a `dlg`
 attack) and the [fuzzer](fuzzing.md) expands the matrix accordingly.
 

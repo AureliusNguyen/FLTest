@@ -17,6 +17,8 @@ from pathlib import Path
 
 import click
 
+from fltest import __version__
+
 # Quieter third-party logs by default (Flower/Ray/HF are noisy).
 os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 os.environ.setdefault("RAY_DEDUP_LOGS", "0")
@@ -44,7 +46,7 @@ def _loading() -> None:
 
 
 @click.group()
-@click.version_option(version="0.2.0", prog_name="fltest")
+@click.version_option(version=__version__, prog_name="fltest")
 def cli() -> None:
     """FLTest — a testbed for privacy & robustness of Privacy-Preserving FL."""
 
@@ -59,32 +61,17 @@ def run(config_path: str, output: str, verbose: bool) -> None:
     _loading()
     from fltest.core.config import load_config
     from fltest.core.orchestrator import Orchestrator
-    from fltest.testing.report import write_report
+    from fltest.testing.report import print_run_matrix, write_report
 
     config = load_config(config_path)
     matrix = Orchestrator(verbose=True).run(config)
-
-    click.echo("\n" + "=" * 92 + f"\nRUN MATRIX: {config.name}\n" + "=" * 92)
-    for r in matrix.results:
-        p = r.params
-        dist = p.get("data_distribution", "")
-        if p.get("dirichlet_alpha") is not None:
-            dist += f"(α={p['dirichlet_alpha']})"
-        defense = ",".join(d["name"] for d in p.get("defenses", [])) or "none"
-        descr = f"{p.get('dataset','')}/{dist}".ljust(22) + "  " + f"def={defense}".ljust(13)
-        acc = r.final.get("accuracy")
-        acc_s = f"acc={acc:.4f}" if acc is not None else r.status
-        asr = r.final.get("attack_success_rate")
-        asr_s = f" asr={asr:.4f}" if asr is not None else ""
-        click.echo(f"  {r.run_name:<12} [{r.framework:<7}] {descr} {acc_s}{asr_s}  ({r.run_id})")
-    click.echo("=" * 92)
 
     report_path = write_report(
         Path(output) / f"{config.name}_run.json", title=f"FLTest run: {config.name}",
         runs=[r.to_dict() for r in matrix.results],
         extra={"total_duration": round(matrix.total_duration, 2)},
     )
-    click.echo(f"Report: {report_path}")
+    print_run_matrix(config.name, matrix.results, matrix.total_duration, report_path)
 
 
 @cli.command()

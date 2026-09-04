@@ -1,0 +1,85 @@
+{
+  "$schema": "https://design-tokens.org/schema.json",
+  "name": "FLTest",
+  "description": "Brand tokens for FLTest, aligned to the Virginia Tech palette.",
+  "palette": {
+    "maroon": {
+      "50": "#FBF3F6",
+      "100": "#F5E2E8",
+      "200": "#E9C4D0",
+      "300": "#D598AC",
+      "400": "#B3607F",
+      "500": "#861F41",
+      "600": "#741A38",
+      "700": "#5E142D",
+      "800": "#480F23",
+      "900": "#310A18"
+    },
+    "orange": {
+      "50": "#FEF6EE",
+      "100": "#FDE8D3",
+      "200": "#FACCA3",
+      "300": "#F5AC6C",
+      "400": "#EE8F41",
+      "500": "#E5751F",
+      "600": "#C55F13",
+      "700": "#9D4A0E",
+      "800": "#76370A",
+      "900": "#4F2406"
+    },
+    "stone": {
+      "50": "#FAF8F8",
+      "100": "#F2EEEF",
+      "200": "#E3DCDE",
+      "300": "#C8BFC2",
+      "400": "#9B9295",
+      "500": "#75787B",
+      "600": "#5B5457",
+      "700": "#433D3F",
+      "800": "#2B1B20",
+      "900": "#1A1013"
+    }
+  },
+  "semantic": {
+    "pass": "#1F7A4C",
+    "fail": "#B3261E",
+    "warn": "#E5751F",
+    "info": "#3B6EA5"
+  },
+  "roles": {
+    "brand.primary": "maroon.500",
+    "brand.primary-dark": "maroon.700",
+    "brand.primary-light": "maroon.400",
+    "brand.accent": "orange.500",
+    "surface": "#FFFFFF",
+    "surface.muted": "stone.50",
+    "surface.inverse": "maroon.500",
+    "text.body": "stone.800",
+    "text.muted": "stone.600",
+    "text.on-primary": "#FFFFFF",
+    "border": "stone.200",
+    "code.bg": "maroon.900"
+  },
+  "typography": {
+    "display": "Inter Display, Inter, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif",
+    "body": "Inter, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif",
+    "mono": "JetBrains Mono, SFMono-Regular, Menlo, Consolas, monospace",
+    "wordmark": "Inter Display Bold, tracking -2.2%, 'FL' in maroon.500 and 'Test' in orange.500"
+  },
+  "radius": {
+    "sm": "6px",
+    "md": "10px",
+    "lg": "16px",
+    "tile": "22%"
+  },
+  "contrast_ratios": {
+    "maroon.500 on white": 9.19,
+    "orange.500 on white": 3.05,
+    "orange.700 on white": 6.14,
+    "white on maroon.500": 9.19,
+    "orange.500 on maroon.500": 3.02,
+    "orange.300 on maroon.500": 4.81,
+    "stone.800 on white": 16.4,
+    "stone.600 on white": 7.37
+  }
+}

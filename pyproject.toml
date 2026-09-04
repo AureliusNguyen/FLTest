@@ -31,6 +31,8 @@ dependencies = [
 [project.optional-dependencies]
 # Heavy backends kept optional so the lightweight core (reference + flower) always installs cleanly.
 nvflare = ["nvflare>=2.6,<2.9", "tensorboard>=2.16"]
+# Models fetched from the Hugging Face Hub via `model_name: hf:<id>`.
+hf = ["timm>=1.0", "transformers>=4.40"]
 dev = ["pytest>=8.0", "pytest-html>=4.0"]
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5"]
 

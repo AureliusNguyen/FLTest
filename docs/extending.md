@@ -178,9 +178,9 @@ Subclass `FrameworkAdapter`, implement `run_simulation(spec, data, hook_runner)`
 lifecycle hooks, return a `RunResult`, and `@register_framework("name")`. Use the reference
 adapter (`fltest/frameworks/reference/adapter.py`) as the template — it has the full hook
 surface. Declare your module in `BUILTIN_FRAMEWORKS` in `fltest/frameworks/__init__.py`, or
-in `OPTIONAL_FRAMEWORKS` if it needs a third-party dependency that may not be installed —
-entries there are declared only when `importlib.util.find_spec` finds the dependency, which
-does not import it.
+in `OPTIONAL_FRAMEWORKS` if it needs a third-party dependency that may not be installed. An
+optional entry is declared only when `importlib.util.find_spec` finds its dependency, and
+that check does not import it.
 
 ## Test your plugin
 

@@ -1,8 +1,8 @@
 # Config fuzzing
 
-FLTest's orchestration includes a **config fuzzer**: any top-level knob you write as a
+FLTest's orchestration includes a **config fuzzer**. Any top-level knob written as a
 *list* is expanded, and the cartesian product of all list-valued knobs is crossed with the
-`runs:` block to produce one concrete `RunSpec` per cell.
+`runs:` block. Each cell of that product becomes one concrete `RunSpec`.
 
 ## How it works
 
