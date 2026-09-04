@@ -5,15 +5,36 @@ versioning](https://semver.org). The patch number changes for a fix and the mino
 for new capability that leaves existing configs working. The major number changes when the
 configuration schema or the plugin API breaks.
 
+## 0.3.0
+
+**Text.** Added `ag_news` and the plumbing federated text needs. A dataset now declares its
+modality, text splits are tokenized rather than transformed, and a model named `hf:<id>` on
+a text dataset is built as a sequence classifier. One function, `forward_batch`, is the only
+place that knows an image batch carries `img` while a text batch carries `input_ids` and
+`attention_mask`, so the training and evaluation loops serve both.
+
+A `tokenizer` knob was added. It defaults to the Hugging Face model's own tokenizer and is
+set explicitly when a repository ships no fast tokenizer but shares another model's
+vocabulary. Token ids are part of the dataset cache key.
+
+`examples/configs/text_domains.yaml` gives each client a single news topic, which is the
+extreme non-IID setting for language data, and runs an IID baseline beside it. The IID run
+reaches 0.4629 accuracy with a worst client at 0.4617, while one topic per client falls to
+0.2402 against a 1/4 chance baseline with a worst client at 0.0000.
+
+**Guards.** `backdoor` stamps a trigger onto pixels and `dlg` reconstructs pixels from
+gradients, so neither applies to text. Both now refuse a text run with a message naming the
+attacks that do apply, rather than failing on a missing column.
+
 ## 0.2.0
 
-**Datasets.** Added `cifar100` and `femnist`. FEMNIST is the answer to Pitfall-2, since it
-labels every character by the writer who produced it, and the new `natural` partitioner
-gives each client one real writer instead of a synthetic shard. A dataset name FLTest does
+**Datasets.** Added `cifar100` and `femnist`. FEMNIST is the answer to Pitfall-2, because it
+labels every character by the writer who produced it. The new `natural` partitioner gives
+each client one real writer instead of a synthetic shard. A dataset name FLTest does
 not recognise is now treated as a Hugging Face id and described from its metadata, so any
 Hub image-classification dataset works without a code change. A dataset that ships no test
 split, as FEMNIST does, gets 10,000 examples held out under a fixed seed before
-partitioning, because slicing the test set out of the client shards would evaluate the
+partitioning. Slicing the test set out of the client shards instead would evaluate the
 global model on data its own clients trained on.
 
 **Models.** Added the torchvision architectures `ResNet18`, `ResNet34`, `ResNet50`,

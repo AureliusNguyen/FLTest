@@ -77,6 +77,7 @@ testing:
 | Key | Default | Options |
 |-----|---------|---------|
 | `model_name` | `LeNet` | built-in, torchvision, or a Hugging Face id (see below) |
+| `tokenizer` | `""` | text datasets only; defaults to the Hugging Face model's own tokenizer |
 
 Three kinds of name are accepted:
 
@@ -87,6 +88,10 @@ Three kinds of name are accepted:
   leaves almost nothing of a 32×32 input.
 - **Hugging Face**: `hf:timm/resnet18` or `hf:google/vit-base-patch16-224`, which needs
   `pip install -e ".[hf]"`. timm is tried first, then transformers.
+
+For a text dataset the model must be a Hugging Face sequence classifier, named the same
+way (`hf:google/bert_uncased_L-2_H-128_A-2`). Asking for an image model on text data raises
+an error that says so.
 
 Weights are always randomly initialised, never pretrained, because federated training has
 to start from one shared initialisation across every client and framework.

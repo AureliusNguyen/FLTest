@@ -114,6 +114,7 @@ class RunSpec(BaseModel):
     model_name: str = "LeNet"
     channels: int = 1
     num_classes: int = 10
+    tokenizer: str = ""  # text only; defaults to the Hugging Face model's own tokenizer
 
     # FL params
     num_clients: int = 10
@@ -139,6 +140,18 @@ class RunSpec(BaseModel):
     extras: Dict[str, Any] = Field(default_factory=dict)
 
     model_config = {"extra": "allow"}
+
+    def tokenizer_id(self) -> str:
+        """Tokenizer to encode a text dataset with.
+
+        An explicit ``tokenizer`` wins. Otherwise a Hugging Face model brings its own, which
+        is what keeps a text config down to one line naming the model.
+        """
+        if self.tokenizer:
+            return self.tokenizer
+        if self.model_name.startswith("hf:"):
+            return self.model_name[len("hf:"):]
+        return ""
 
     def partitioner_kwargs(self) -> Dict[str, Any]:
         if self.data_distribution == "dirichlet":
@@ -189,6 +202,8 @@ class TestConfig(BaseModel):
     deterministic: bool = True
     total_cpus: int = 4
     total_gpus: int = 0
+
+    tokenizer: str = ""  # text only; defaults to the Hugging Face model's own tokenizer
 
     dataset: ScalarOrList = "mnist"
     data_distribution: ScalarOrList = "iid"

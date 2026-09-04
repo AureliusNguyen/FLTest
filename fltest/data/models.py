@@ -164,8 +164,32 @@ class _HFImageClassifier(nn.Module):
         return self.inner(pixel_values=x).logits
 
 
+class _HFTextClassifier(nn.Module):
+    """Wrap a transformers text classifier so it returns logits like every other model."""
+
+    def __init__(self, inner: nn.Module):
+        super().__init__()
+        self.inner = inner
+
+    def forward(self, input_ids, attention_mask):
+        return self.inner(input_ids=input_ids, attention_mask=attention_mask).logits
+
+
+def _build_hf_text(model_id: str, num_classes: int) -> nn.Module:
+    """Build a Hub sequence classifier, randomly initialised for federated training."""
+    try:
+        from transformers import AutoConfig, AutoModelForSequenceClassification
+    except ImportError as exc:
+        raise ImportError(
+            f"Loading '{HF_PREFIX}{model_id}' for text needs the Hugging Face extra. Install "
+            f'it with pip install -e ".[hf]"'
+        ) from exc
+    config = AutoConfig.from_pretrained(model_id, num_labels=num_classes)
+    return _HFTextClassifier(AutoModelForSequenceClassification.from_config(config))
+
+
 def _build_hf(model_id: str, channels: int, num_classes: int) -> nn.Module:
-    """Build a Hub model by id, trying timm first and then transformers."""
+    """Build a Hub image model by id, trying timm first and then transformers."""
     try:
         import timm
     except ImportError:
@@ -189,6 +213,17 @@ def _build_hf(model_id: str, channels: int, num_classes: int) -> nn.Module:
     if hasattr(config, "num_channels"):
         config.num_channels = channels
     return _HFImageClassifier(AutoModelForImageClassification.from_config(config))
+
+
+def forward_batch(net: nn.Module, batch, device: str):
+    """Run one batch through ``net``, for either modality.
+
+    Image batches carry ``img`` and text batches carry ``input_ids`` with
+    ``attention_mask``, so this is the single place that knows the difference.
+    """
+    if "input_ids" in batch:
+        return net(batch["input_ids"].to(device), batch["attention_mask"].to(device))
+    return net(batch["img"].to(device))
 
 
 def model_weight_sum(model: nn.Module) -> float:
@@ -216,6 +251,7 @@ def get_model(
     channels: int,
     num_classes: int = 10,
     deterministic: bool = True,
+    modality: str = "",
 ) -> nn.Module:
     """Instantiate a model, optionally loading cached deterministic initial weights.
 
@@ -227,7 +263,18 @@ def get_model(
         deterministic: if True, load/store a fixed initial state so all
             clients/frameworks start identically.
     """
-    if model_name in MODEL_REGISTRY:
+    # A text dataset reports zero channels, so the modality follows from the data unless a
+    # caller states it outright.
+    modality = modality or ("text" if channels == 0 else "image")
+
+    if modality == "text":
+        if not model_name.startswith(HF_PREFIX):
+            raise ValueError(
+                f"'{model_name}' is an image model, but this dataset is text. Use a Hugging "
+                f"Face sequence classifier such as 'hf:prajjwal1/bert-tiny'."
+            )
+        model = _build_hf_text(model_name[len(HF_PREFIX):], num_classes)
+    elif model_name in MODEL_REGISTRY:
         model = MODEL_REGISTRY[model_name](channels=channels, num_classes=num_classes)
     elif model_name in TORCHVISION_MODELS:
         model = _build_torchvision(TORCHVISION_MODELS[model_name], channels, num_classes)
@@ -266,9 +313,9 @@ def train(
     for _ in range(epochs):
         running, total = 0.0, 0
         for batch in trainloader:
-            images, labels = batch["img"].to(device), batch["label"].to(device)
+            labels = batch["label"].to(device)
             optimizer.zero_grad()
-            loss = criterion(net(images), labels)
+            loss = criterion(forward_batch(net, batch, device), labels)
             loss.backward()
             optimizer.step()
             running += loss.item() * labels.size(0)
@@ -285,8 +332,8 @@ def test(net: nn.Module, testloader, device: str, loss_fn: str = "CrossEntropyLo
     correct, total, loss_sum = 0, 0, 0.0
     net.eval()
     for batch in testloader:
-        images, labels = batch["img"].to(device), batch["label"].to(device)
-        outputs = net(images)
+        labels = batch["label"].to(device)
+        outputs = forward_batch(net, batch, device)
         loss_sum += criterion(outputs, labels).item() * labels.size(0)
         predicted = torch.argmax(outputs, dim=1)
         total += labels.size(0)

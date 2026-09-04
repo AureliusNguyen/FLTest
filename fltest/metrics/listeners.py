@@ -14,7 +14,7 @@ import torch
 
 from fltest.core.hook_context import HookContext
 from fltest.core.registry import register_metric
-from fltest.data.models import get_model
+from fltest.data.models import forward_batch, get_model
 from fltest.data.utils import load_ndarrays_into
 from fltest.metrics.base import MetricListenerBaseClass
 
@@ -73,9 +73,8 @@ class PerClientAccuracyListener(MetricListenerBaseClass):
                 continue
             correct, total = 0, 0
             for batch in loader:
-                images = batch["img"].to(spec.device)
                 labels = batch["label"].to(spec.device)
-                preds = torch.argmax(model(images), dim=1)
+                preds = torch.argmax(forward_batch(model, batch, spec.device), dim=1)
                 correct += (preds == labels).sum().item()
                 total += labels.size(0)
             if total:
