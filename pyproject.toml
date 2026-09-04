@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fltest"
-version = "0.4.4"
+version = "0.4.5"
 description = "FLTest: a testbed for evaluating privacy and robustness of Privacy-Preserving Federated Learning (PPFL)."
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
@@ -32,7 +32,10 @@ dependencies = [
 # Heavy backends kept optional so the lightweight core (reference + flower) always installs cleanly.
 nvflare = ["nvflare>=2.6,<2.9", "tensorboard>=2.16"]
 # Models fetched from the Hugging Face Hub via `model_name: hf:<id>`.
-hf = ["timm>=1.0", "transformers>=4.40"]
+# transformers 5 requires torch >= 2.5 and quietly disables PyTorch below it, which leaves
+# only tokenizers working. torch ships no macOS x86_64 wheel past 2.2.2, so an Intel Mac
+# cannot satisfy that floor at all. Capping below 5 keeps the extra working everywhere.
+hf = ["timm>=1.0", "transformers>=4.40,<5"]
 dev = ["pytest>=8.0", "pytest-html>=4.0"]
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5"]
 

@@ -22,4 +22,4 @@ defenses:
 metrics: [accuracy, loss, per_client]
 
 runs:
-  - {framework: reference, name: reference}
+  - {framework: flwr, name: flower}

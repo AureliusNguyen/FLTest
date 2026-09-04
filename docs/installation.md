@@ -23,6 +23,13 @@ pip install -e ".[hf]"        # Hugging Face models via `model_name: hf:<id>`
 pip install -e ".[docs]"      # this documentation site (mkdocs-material)
 ```
 
+!!! warning "Intel Macs cap PyTorch at 2.2.2"
+    PyTorch ships no macOS x86_64 wheel past 2.2.2, so an Intel Mac cannot install a newer
+    one. transformers 5 requires torch 2.5 or later and disables PyTorch below it, printing
+    `Disabling PyTorch because PyTorch >= 2.5 is required but found 2.2.2` and leaving only
+    tokenizers usable. The `[hf]` extra therefore pins transformers below 5, which works on
+    both architectures. Apple Silicon is unaffected and reaches current torch releases.
+
 !!! note "Hugging Face versions"
     Dataset ids are namespaced (`uoft-cs/cifar10`), which is required from
     huggingface-hub 1.16 onward and works on earlier versions too. If a Hub call fails in
