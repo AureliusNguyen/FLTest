@@ -1,15 +1,23 @@
 """Defense / PPFL-technique plugins, implemented as composable hooks.
 
-Importing this package registers all built-in defenses into
-:data:`fltest.core.registry.DEFENSES`.
+Importing this package declares all built-in defenses in
+:data:`fltest.core.registry.DEFENSES`. The declarations are lazy: each implementing
+module is imported the first time its defense is requested.
 """
 
+from fltest.core.registry import DEFENSES
 from fltest.defenses.base import PPFLBaseClass
 
-from fltest.defenses import gradient_noise as _gradient_noise  # noqa: F401
-from fltest.defenses import norm_clip as _norm_clip  # noqa: F401
-from fltest.defenses import krum as _krum  # noqa: F401
-from fltest.defenses import trimmed_mean as _trimmed_mean  # noqa: F401
-from fltest.defenses import median as _median  # noqa: F401
+#: registry name -> module that defines and registers it
+BUILTIN_DEFENSES = {
+    "gradient_noise": "fltest.defenses.gradient_noise",
+    "norm_clip": "fltest.defenses.norm_clip",
+    "krum": "fltest.defenses.krum",
+    "trimmed_mean": "fltest.defenses.trimmed_mean",
+    "median": "fltest.defenses.median",
+}
 
-__all__ = ["PPFLBaseClass"]
+for _name, _module in BUILTIN_DEFENSES.items():
+    DEFENSES.register_lazy(_name, _module)
+
+__all__ = ["PPFLBaseClass", "BUILTIN_DEFENSES"]

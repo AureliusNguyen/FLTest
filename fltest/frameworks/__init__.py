@@ -1,29 +1,43 @@
 """FL framework adapters.
 
 Each backend implements :class:`fltest.frameworks.base.FrameworkAdapter` and registers
-itself by name. Importing this package triggers registration of the always-available
-backends (reference, flower). Heavy/optional backends (nvflare, pfl) register lazily and
-only if their dependencies are installed.
+itself by name. Backends are declared lazily here: the adapter module is imported the
+first time its name is requested, so listing the catalog costs nothing. Optional heavy
+backends (NVFlare) are declared only when their dependency is installed, which is
+checked with :func:`importlib.util.find_spec` and does not import it.
 """
 
+from importlib.util import find_spec
+
+from fltest.core.registry import FRAMEWORKS
 from fltest.frameworks.base import FrameworkAdapter, RunResult, get_adapter
 
-# Always-available, dependency-light backends.
-from fltest.frameworks import reference as _reference  # noqa: F401
-from fltest.frameworks import flower as _flower  # noqa: F401
+#: registry name -> adapter module. Several names may share one module (aliases).
+BUILTIN_FRAMEWORKS = {
+    "reference": "fltest.frameworks.reference",
+    "flower": "fltest.frameworks.flower",
+    "flwr": "fltest.frameworks.flower",
+}
+
+#: optional backends, declared only if the third-party dependency is importable
+OPTIONAL_FRAMEWORKS = {
+    "nvflare": ("nvflare", "fltest.frameworks.nvflare"),
+    "flare": ("nvflare", "fltest.frameworks.nvflare"),
+}
 
 
-def _try_register_optional() -> None:
-    """Register heavy optional backends if their deps import cleanly."""
-    for module in ("fltest.frameworks.nvflare", "fltest.frameworks.pfl"):
+def _declare() -> None:
+    for name, module in BUILTIN_FRAMEWORKS.items():
+        FRAMEWORKS.register_lazy(name, module)
+    for name, (dependency, module) in OPTIONAL_FRAMEWORKS.items():
         try:
-            __import__(module)
-        except Exception:
-            # Optional extra not installed; skip silently. `fltest run` reports a clear
-            # error only if a config actually requests the missing backend.
-            pass
+            available = find_spec(dependency) is not None
+        except (ImportError, ValueError):
+            available = False
+        if available:
+            FRAMEWORKS.register_lazy(name, module)
 
 
-_try_register_optional()
+_declare()
 
 __all__ = ["FrameworkAdapter", "RunResult", "get_adapter"]

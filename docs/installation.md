@@ -35,8 +35,14 @@ fltest list
 # Defenses:   ['gradient_noise', 'krum', 'median', 'norm_clip', 'trimmed_mean']
 # Metrics:    ['accuracy', 'loss', 'per_client']
 
-pytest tests/ -q          # 13 passing
+pytest tests/ -q          # 15 passing
 ```
+
+`fltest list` and `fltest pitfalls` return immediately, because neither needs to load a
+model or a dataset. The first `fltest run`, `fltest diff`, or `fltest metamorphic` in a
+new environment imports PyTorch, Flower, and the dataset stack, which can take a minute
+before any output appears. Those commands print a notice while they load, and subsequent
+runs start in a few seconds.
 
 ## Docker (deliverable)
 

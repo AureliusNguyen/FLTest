@@ -1,5 +1,8 @@
 """Registries populate and the config fuzzer expands list knobs × runs correctly."""
 
+import subprocess
+import sys
+
 from fltest.core.config import TestConfig
 from fltest.core.orchestrator import expand_run_specs
 
@@ -31,3 +34,37 @@ def test_derived_channels_classes():
     cfg = TestConfig(name="d", dataset="cifar10", runs=[{"framework": "reference"}])
     spec = expand_run_specs(cfg)[0]
     assert spec.channels == 3 and spec.num_classes == 10
+
+
+def test_lazy_declarations_resolve():
+    """Every lazily declared name must really be registered by the module it names.
+
+    Guards against drift: renaming a plugin module or its registry name would otherwise
+    only fail at run time, when a config asks for it.
+    """
+    from fltest.attacks import BUILTIN_ATTACKS
+    from fltest.core.registry import ATTACKS, DEFENSES, FRAMEWORKS, METRICS
+    from fltest.defenses import BUILTIN_DEFENSES
+    from fltest.frameworks import BUILTIN_FRAMEWORKS
+    from fltest.metrics import BUILTIN_METRICS
+
+    for registry, declared in (
+        (ATTACKS, BUILTIN_ATTACKS),
+        (DEFENSES, BUILTIN_DEFENSES),
+        (METRICS, BUILTIN_METRICS),
+        (FRAMEWORKS, BUILTIN_FRAMEWORKS),
+    ):
+        for name in declared:
+            assert registry.get(name) is not None, name
+
+
+def test_listing_the_catalog_does_not_import_torch():
+    """`fltest list` must stay fast, which means declaring names loads no heavy deps."""
+    code = (
+        "import sys;"
+        "import fltest.frameworks, fltest.attacks, fltest.defenses, fltest.metrics;"
+        "from fltest.core.registry import ATTACKS, DEFENSES, FRAMEWORKS, METRICS;"
+        "[r.names() for r in (ATTACKS, DEFENSES, FRAMEWORKS, METRICS)];"
+        "sys.exit(1 if 'torch' in sys.modules else 0)"
+    )
+    assert subprocess.run([sys.executable, "-c", code]).returncode == 0

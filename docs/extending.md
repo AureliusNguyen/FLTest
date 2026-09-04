@@ -53,11 +53,20 @@ class ScaleUpdateAttack(ThreatModelBaseClass):
         ctx.client_update = [u * self.factor for u in ctx.client_update]
 ```
 
-Register it for import in `fltest/attacks/__init__.py`:
+Declare it in `BUILTIN_ATTACKS` in `fltest/attacks/__init__.py`, mapping the registry
+name to the module that defines it:
 
 ```python
-from fltest.attacks import my_attack as _my_attack  # noqa: F401
+BUILTIN_ATTACKS = {
+    ...
+    "scale_update": "fltest.attacks.my_attack",
+}
 ```
+
+The module is imported the first time the attack is requested, so a plugin that pulls in
+torch costs nothing until it is used. The name still has to match the one in your
+`@register_attack` decorator; `tests/test_registry_and_fuzzer.py` checks that every
+declared name really is registered by the module it names.
 
 Use it:
 
@@ -108,7 +117,8 @@ class GeoMedian(PPFLBaseClass):
         replace_with(ctx, unflatten(agg, updates[0]))      # backend averages this single result
 ```
 
-Register it in `fltest/defenses/__init__.py`, then:
+Declare it in `BUILTIN_DEFENSES` in `fltest/defenses/__init__.py`
+(`"geometric_median": "fltest.defenses.my_defense"`), then:
 
 ```yaml
 defenses: [{name: geometric_median}]
@@ -132,6 +142,8 @@ class GradNormListener(MetricListenerBaseClass):
         ctx.record(client_grad_norm=norm)
 ```
 
+Declare it in `BUILTIN_METRICS` in `fltest/metrics/__init__.py`
+(`"grad_norm": "fltest.metrics.my_listener"`), then use
 `metrics: [accuracy, loss, grad_norm]`. The metric is now assertable in differential and
 metamorphic tests (`metric: client_grad_norm`).
 
@@ -165,8 +177,10 @@ rebuilt inside Ray workers — see [Architecture](ARCHITECTURE.md).)
 Subclass `FrameworkAdapter`, implement `run_simulation(spec, data, hook_runner)`, emit the
 lifecycle hooks, return a `RunResult`, and `@register_framework("name")`. Use the reference
 adapter (`fltest/frameworks/reference/adapter.py`) as the template — it has the full hook
-surface. Register your module in `fltest/frameworks/__init__.py` (wrap heavy imports in the
-optional-extra try/except).
+surface. Declare your module in `BUILTIN_FRAMEWORKS` in `fltest/frameworks/__init__.py`, or
+in `OPTIONAL_FRAMEWORKS` if it needs a third-party dependency that may not be installed —
+entries there are declared only when `importlib.util.find_spec` finds the dependency, which
+does not import it.
 
 ## Test your plugin
 

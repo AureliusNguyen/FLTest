@@ -1,16 +1,24 @@
 """Attack (threat model) plugins, implemented as composable hooks.
 
-Importing this package registers all built-in attacks into
-:data:`fltest.core.registry.ATTACKS` so they are usable by name from a config.
+Importing this package declares all built-in attacks in
+:data:`fltest.core.registry.ATTACKS` so they are usable by name from a config. The
+declarations are lazy: each implementing module is imported the first time its attack is
+requested, so importing this package does not pull in torch.
 """
 
 from fltest.attacks.base import ThreatModelBaseClass
+from fltest.core.registry import ATTACKS
 
-# Register built-ins on import.
-from fltest.attacks import label_flip as _label_flip  # noqa: F401
-from fltest.attacks import sign_flip as _sign_flip  # noqa: F401
-from fltest.attacks import gaussian as _gaussian  # noqa: F401
-from fltest.attacks import data_poison_backdoor as _backdoor  # noqa: F401
-from fltest.attacks import dlg as _dlg  # noqa: F401
+#: registry name -> module that defines and registers it
+BUILTIN_ATTACKS = {
+    "label_flip": "fltest.attacks.label_flip",
+    "sign_flip": "fltest.attacks.sign_flip",
+    "gaussian": "fltest.attacks.gaussian",
+    "backdoor": "fltest.attacks.data_poison_backdoor",
+    "dlg": "fltest.attacks.dlg",
+}
 
-__all__ = ["ThreatModelBaseClass"]
+for _name, _module in BUILTIN_ATTACKS.items():
+    ATTACKS.register_lazy(_name, _module)
+
+__all__ = ["ThreatModelBaseClass", "BUILTIN_ATTACKS"]
