@@ -27,6 +27,22 @@ def _quiet(verbose: bool) -> None:
         logging.disable(logging.INFO)
 
 
+def _loading() -> None:
+    """Say why the next few seconds are silent.
+
+    Running a simulation imports torch, flwr, and the dataset stack. The first such
+    import in a fresh environment can take tens of seconds, during which a command that
+    prints nothing is indistinguishable from one that has hung. Written to stderr and
+    only for a terminal, so piped output and CI logs stay clean.
+    """
+    if sys.stderr.isatty():
+        click.echo(
+            "Loading FLTest components (the first run imports PyTorch and may take "
+            "a minute)...",
+            err=True,
+        )
+
+
 @click.group()
 @click.version_option(version="0.2.0", prog_name="fltest")
 def cli() -> None:
@@ -40,6 +56,7 @@ def cli() -> None:
 def run(config_path: str, output: str, verbose: bool) -> None:
     """Run the orchestrated experiment matrix from CONFIG_PATH."""
     _quiet(verbose)
+    _loading()
     from fltest.core.config import load_config
     from fltest.core.orchestrator import Orchestrator
     from fltest.testing.report import write_report
@@ -77,6 +94,7 @@ def run(config_path: str, output: str, verbose: bool) -> None:
 def diff(config_path: str, output: str, verbose: bool) -> None:
     """Differential test: cross-framework parity (default) or determinism."""
     _quiet(verbose)
+    _loading()
     from fltest.core.config import load_config
     from fltest.core.orchestrator import Orchestrator
     from fltest.testing.differential import DifferentialTester
@@ -109,6 +127,7 @@ def diff(config_path: str, output: str, verbose: bool) -> None:
 def metamorphic(config_path: str, output: str, verbose: bool) -> None:
     """Metamorphic test: check input/output relations defined under testing.metamorphic."""
     _quiet(verbose)
+    _loading()
     from fltest.core.config import load_config
     from fltest.core.orchestrator import Orchestrator
     from fltest.testing.metamorphic import MetamorphicTester

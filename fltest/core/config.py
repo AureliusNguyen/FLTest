@@ -22,8 +22,6 @@ from typing import Any, Dict, List, Optional, Union
 import yaml
 from pydantic import BaseModel, Field
 
-from fltest.data.datasets import dataset_meta
-
 ScalarOrList = Union[Any, List[Any]]
 
 
@@ -225,6 +223,10 @@ class TestConfig(BaseModel):
     model_config = {"extra": "allow"}
 
     def derived_channels_classes(self, dataset_name: str):
+        # Imported lazily: fltest.data.datasets pulls in torch and flwr-datasets, and
+        # keeping this module light is what lets `fltest list` run without loading them.
+        from fltest.data.datasets import dataset_meta
+
         return dataset_meta(dataset_name)
 
 
