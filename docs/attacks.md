@@ -23,6 +23,7 @@ updates, so they apply to either modality.
 | `sign_flip` | model poisoning | `after_client_train` | `scale` (1.0) |
 | `backdoor` | data poisoning (targeted) | `before_client_train`, `after_round` | `target_label` (0), `infection_rate` (0.3), `patch_size` (4), `patch_value` (1.0) |
 | `dlg` | privacy (gradient inversion) | `before_client_train` (+ `before_aggregate` in shared_update mode) | `target_client`, `target_round`, `num_images`, `iters`, `source` |
+| `membership_inference` | privacy (inference) | `on_data_distribute`, `after_round` | `target_client` (0), `max_samples` (512) |
 
 ## How each works
 
@@ -42,6 +43,20 @@ images and relabels them to `target_label`; the global model learns
 fraction of a triggered test set predicted as the target — and records it as a metric. This
 is the headline robustness signal; pair it with a robust-aggregation defense to see ASR drop
 (see [Defenses](defenses.md)).
+
+**`membership_inference`** — asks whether a given record was in a client's training data,
+which is the canonical privacy attack the proposal cites and the one Pitfall-1 says
+evaluations skip. It models an honest-but-curious server that sees the global model each
+round. The score is the per-sample loss, following Yeom et al., since a model assigns lower
+loss to data it trained on. Members are the target client's training data and non-members
+are the held-out test set. It records `membership_inference_auc`, where 0.5 means no
+leakage and 1.0 means members and non-members separate perfectly, alongside
+`membership_loss_gap`. No shadow model is needed, and because it reads only losses it
+applies to text as readily as to images.
+
+For example, `examples/configs/membership_inference.yaml` runs the same overfitted setup
+twice. Undefended it reaches AUC 0.67, and clipping with Gaussian noise takes it to 0.50,
+which is chance, for about six points of accuracy.
 
 **`dlg`** — Deep Leakage from Gradients: reconstructs a victim client's private batch by
 optimizing a dummy batch so its gradient matches the victim's. Records `reconstruction_mse`,
