@@ -5,6 +5,17 @@ versioning](https://semver.org). The patch number changes for a fix and the mino
 for new capability that leaves existing configs working. The major number changes when the
 configuration schema or the plugin API breaks.
 
+## 0.4.5
+
+**Fixed.** The `[hf]` extra now pins `transformers<5`. transformers 5 requires torch 2.5 or
+later and silently disables PyTorch below it, so `hf:` models and text datasets stopped
+working while tokenizers kept loading. PyTorch ships no macOS x86_64 wheel past 2.2.2,
+which means an Intel Mac cannot satisfy that floor at any version. The cap keeps the extra
+working on both architectures.
+
+`environment.yml` also referred to a `[pfl]` extra that no longer exists, and now points at
+`[hf]` instead.
+
 ## 0.4.4
 
 **Fixed.** The built-in datasets used bare Hugging Face ids, so `mnist`, `fashion_mnist`,

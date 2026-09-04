@@ -3,7 +3,7 @@
 #   conda activate fltest
 #   pip install -e .            # core (reference + flower backends)
 #   pip install -e ".[nvflare]" # optional NVFlare backend
-#   pip install -e ".[pfl]"     # optional pfl backend
+#   pip install -e ".[hf]"      # optional Hugging Face models and text datasets
 #   pip install -e ".[dev]"     # test tooling
 #
 # Python deps are intentionally installed via pip from pyproject.toml so there is a
