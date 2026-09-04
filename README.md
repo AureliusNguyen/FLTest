@@ -43,7 +43,8 @@ makes a rigorous setup the default and *checks* for the common pitfalls.
   share one `HookContext`. A plugin written once runs across every backend, and several
   plugins compose on a single run.
 - **Attacks:** `label_flip`, `sign_flip`, `gaussian`, `backdoor` (with attack-success-rate),
-  `dlg` (gradient-inversion privacy attack).
+  `dlg` (gradient-inversion privacy attack), `membership_inference` (loss-threshold
+  privacy attack, scored as AUC each round).
 - **Defenses (PPFL):** `gradient_noise` (DP-style clip+noise), `norm_clip`, and robust
   aggregation `krum` / `trimmed_mean` / `median`.
 - **Differential testing:** same config across frameworks must agree within tolerance

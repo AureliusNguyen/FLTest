@@ -19,7 +19,7 @@ NAIVE_ATTACKS = {"gaussian", "label_flip", "sign_flip"}
 # FEMNIST is deliberately absent: it is writer-partitioned and naturally non-IID, so a
 # config that uses it clears this pitfall.
 BALANCED_DATASETS = {"mnist", "fashion_mnist", "cifar10", "cifar100"}
-PRIVACY_ATTACKS = {"dlg"}  # gradient-inversion / inference style
+PRIVACY_ATTACKS = {"dlg", "membership_inference"}  # gradient-inversion / inference style
 
 
 @dataclass
@@ -59,7 +59,8 @@ def check_config(config: TestConfig) -> List[Finding]:
         findings.append(Finding(
             "P1_threat_models", "Inadequate threat models", "high",
             "No attacks configured; robustness/privacy claims would be untested.",
-            "Add at least one strong attack (e.g. backdoor) and one privacy attack (dlg).",
+            "Add a strong attack such as 'backdoor', and a privacy attack such as "
+            "'membership_inference' or 'dlg'.",
             {"attacks": sorted(attack_names)}))
     elif attack_names and attack_names <= NAIVE_ATTACKS:
         findings.append(Finding(

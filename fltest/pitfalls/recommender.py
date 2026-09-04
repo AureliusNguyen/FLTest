@@ -27,7 +27,13 @@ _COUNTER_EXPERIMENTS: Dict[str, str] = {
         "testing:\n  metamorphic:\n    - {relation: dp_noise, parameter: defense.sigma, "
         "values: [0.0, 0.05, 0.1, 0.2], metric: accuracy}"
     ),
-    "P5_subtle_leakage": "attacks:\n  - {name: dlg, params: {target_round: 1, iters: 300}}",
+    # Membership inference comes first: it is cheap, it scores every round, and unlike
+    # gradient inversion it applies to text as well as images.
+    "P5_subtle_leakage": (
+        "attacks:\n"
+        "  - {name: membership_inference, params: {target_client: 0}}\n"
+        "  - {name: dlg, params: {target_round: 1, iters: 300}}"
+    ),
     "P6_user_expertise": "defenses:\n  - {name: krum, params: {num_byzantine: 1}}",
 }
 

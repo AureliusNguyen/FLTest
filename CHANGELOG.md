@@ -5,6 +5,27 @@ versioning](https://semver.org). The patch number changes for a fix and the mino
 for new capability that leaves existing configs working. The major number changes when the
 configuration schema or the plugin API breaks.
 
+## 0.4.0
+
+**Membership inference.** Added the `membership_inference` attack, which asks whether a
+record was in a client's training data. It is the canonical privacy attack the proposal
+cites and the one Pitfall-1 says evaluations skip. An honest-but-curious server scores the
+global model each round by per-sample loss, following Yeom et al., since a model assigns
+lower loss to what it trained on. Members are the target client's data and non-members are
+the held-out test set.
+
+It records `membership_inference_auc`, where 0.5 is no leakage, and `membership_loss_gap`.
+No shadow model is needed, and because it reads only losses it works on text as well as
+images, which gradient inversion does not.
+
+`examples/configs/membership_inference.yaml` runs one overfitted setup twice. Undefended it
+reaches AUC 0.67 with a loss gap of 1.39. Clipping with Gaussian noise takes the AUC to
+0.50, which is chance, and the gap to 0.01, for about six points of accuracy. That is the
+privacy and utility trade-off of Pitfall-4, measured.
+
+The pitfall checker counts it as a privacy attack, so `P5_subtle_leakage` now recommends it
+ahead of gradient inversion, which is cheaper to run and applies to more datasets.
+
 ## 0.3.4
 
 **Fixed.** The NVFlare backend only ever worked on 1-channel, 10-class data. It rebuilds the

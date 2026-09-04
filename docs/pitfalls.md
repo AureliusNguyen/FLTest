@@ -17,7 +17,7 @@ fltest pitfalls <config.yaml>
 | `P3_iid_only` | IID-only evaluation | every `data_distribution` is `iid` | high |
 | `P3_no_personalized` | No personalized metric | `per_client` not in `metrics` | medium |
 | `P4_misconfig_dp` | Misconfigured DP | `gradient_noise` with `sigma=0` (no privacy) or very large | high / low |
-| `P5_subtle_leakage` | Subtle privacy leakage | no privacy attack (`dlg`) included | medium |
+| `P5_subtle_leakage` | Subtle privacy leakage | no privacy attack (`membership_inference` or `dlg`) included | medium |
 | `P6_user_expertise` | Mismatched defense | only perturbation defenses against non-naive attacks | low |
 
 ## Recommendations

@@ -1,0 +1,27 @@
+# Membership inference, and what differential privacy costs to stop it.
+#
+# An honest-but-curious server sees the global model each round and asks, for a given
+# record, whether it was in a client's training data. The score is the per-sample loss:
+# a model assigns lower loss to what it trained on. AUC of 0.5 means no leakage.
+#
+# The two runs differ only by the defense. Local epochs are high and each shard is small,
+# so the model overfits and there is something to leak. Without a defense the attack
+# reaches AUC 0.67. Clipping and noising the update takes it to 0.50, which is chance,
+# and costs about six points of accuracy. That trade-off is proposal Pitfall-4.
+name: mia_demo
+dataset: cifar10
+data_distribution: iid
+model_name: LeNet
+num_clients: 4
+num_rounds: 5
+client_epochs: 10
+client_lr: 0.001
+optimizer: Adam
+dataset_partitions: 200
+max_test_data_size: 512
+total_cpus: 6
+metrics: [accuracy, loss]
+attacks: [{name: membership_inference, params: {target_client: 0}}]
+runs:
+  - {framework: reference, name: no_defense}
+  - {framework: reference, name: dp_noise, defenses: [{name: gradient_noise, params: {clip_norm: 1.0, sigma: 0.05}}]}
