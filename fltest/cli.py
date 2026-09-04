@@ -19,14 +19,30 @@ import click
 
 from fltest import __version__
 
-# Quieter third-party logs by default (Flower/Ray/HF are noisy).
+# Quieter third-party output by default (Flower, Ray, NVFlare, and the Hugging Face stack
+# are all noisy).
 os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
-os.environ.setdefault("RAY_DEDUP_LOGS", "0")
 
 
 def _quiet(verbose: bool) -> None:
-    if not verbose:
-        logging.disable(logging.INFO)
+    """Silence third-party logging unless the user asked to see it.
+
+    These are environment variables rather than logging calls because Ray and NVFlare do
+    their work in separate processes. A child inherits the environment, but it does not
+    inherit ``logging.disable``, which is why suppressing INFO here alone left NVFlare
+    printing well over a hundred lines from its site processes.
+
+    ``setdefault`` leaves an explicit setting from the user's own environment alone.
+    """
+    if verbose:
+        os.environ.setdefault("FL_LOG_LEVEL", "INFO")
+        os.environ.setdefault("RAY_DEDUP_LOGS", "0")  # show each worker separately
+        return
+
+    logging.disable(logging.INFO)
+    os.environ.setdefault("FL_LOG_LEVEL", "ERROR")           # NVFlare, incl. its sites
+    os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
+    os.environ.setdefault("RAY_DEDUP_LOGS", "1")             # collapse repeated worker lines
 
 
 def _loading() -> None:

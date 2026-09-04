@@ -5,6 +5,18 @@ versioning](https://semver.org). The patch number changes for a fix and the mino
 for new capability that leaves existing configs working. The major number changes when the
 configuration schema or the plugin API breaks.
 
+## 0.4.6
+
+**Fixed.** A three-way differential printed 165 lines, 143 of them NVFlare INFO and WARNING
+records, even without `-v`. `logging.disable` only affects the process that calls it, and
+NVFlare runs each client in its own process, so the suppression never reached them. The
+same held for Ray workers, which repeated every Hugging Face import message once per
+worker because log deduplication was switched off.
+
+Quiet mode now sets `FL_LOG_LEVEL`, `TRANSFORMERS_VERBOSITY`, and `RAY_DEDUP_LOGS` in the
+environment, which a child process does inherit. The same run now prints 22 lines with no
+INFO or WARNING records, and `-v` still produces the full 415.
+
 ## 0.4.5
 
 **Fixed.** The `[hf]` extra now pins `transformers<5`. transformers 5 requires torch 2.5 or
