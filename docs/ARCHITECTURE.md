@@ -31,9 +31,11 @@
 
 `frameworks/base.py` defines `FrameworkAdapter.run_simulation(spec, data, hook_runner) ->
 RunResult`. The core never imports a framework directly; `get_adapter(name)` returns the
-registered adapter. Adding a backend = subclass + `@register_framework("name")` + emit the
-lifecycle hooks. `frameworks/__init__.py` registers reference + Flower always and tries the
-optional heavy backends (NVFlare) only if importable.
+registered adapter. Adding a backend means subclassing, applying
+`@register_framework("name")`, emitting the lifecycle hooks, and declaring the module in
+`frameworks/__init__.py`. Backends are declared lazily there, so an adapter is imported only
+when a config asks for it. An optional backend such as NVFlare is declared only when
+`importlib.util.find_spec` finds its dependency.
 
 ## The hook lifecycle
 
@@ -66,10 +68,10 @@ so a defense sanitizes a tampered update on the same hook.
 
 ## Testing engines
 
-- **Differential** (`testing/differential.py`): groups runs by a *logical key* (all spec
-  fields except the framework) and asserts the chosen metric is within tolerance across the
-  group (cross-framework parity); or re-runs a spec and asserts identical results
-  (determinism). Rules in `testing/rules.py`.
+- **Differential** (`testing/differential.py`) checks cross-framework parity. It groups runs
+  by a *logical key*, meaning every spec field except the framework, then asserts the chosen
+  metric agrees within tolerance across that group. Its determinism mode re-runs one spec
+  and asserts identical results instead. Rules live in `testing/rules.py`.
 - **Metamorphic** (`testing/metamorphic.py`): transforms one input parameter over a sweep
   and checks a relation (`non_decreasing` / `non_increasing`) — e.g. N→2N clients must not
   drop accuracy; stronger attack must not raise it.

@@ -1,10 +1,10 @@
 # FLTest
 
 **A testbed for evaluating the privacy and robustness of Privacy-Preserving Federated
-Learning (PPFL).** FLTest gives *software-defined control and visibility* into FL testing:
-run the same experiment across multiple FL frameworks, inject attacks and defenses as
-composable hooks, and apply **differential** and **metamorphic** tests plus a **pitfall
-checker** — all from a single YAML config.
+Learning (PPFL).** FLTest gives *software-defined control and visibility* into FL testing.
+One YAML config runs the same experiment across several FL frameworks, injects attacks and
+defenses as composable hooks, and applies differential testing, metamorphic testing, and a
+pitfall checker.
 
 FLTest is the **NSF PDaSP (Track 3) FLTEST project** — *A Testbed for Enhancing Privacy and
 Robustness of Federated Learning Systems* — supported by the U.S. National Science Foundation
@@ -34,7 +34,7 @@ makes a rigorous setup the default and *checks* for the common pitfalls.
   `run_simulation()` adapter. Built in: a dependency-light **reference** PyTorch FedAvg
   oracle, **Flower**, and **NVFlare** (optional extra).
 - **Everything is a hook.** Attacks, defenses, and metric listeners are hook plugins that
-  share one `HookContext`, so a plugin written once runs across every backend and multiple
+  share one `HookContext`. A plugin written once runs across every backend, and several
   plugins compose on a single run.
 - **Attacks:** `label_flip`, `sign_flip`, `gaussian`, `backdoor` (with attack-success-rate),
   `dlg` (gradient-inversion privacy attack).
@@ -113,9 +113,9 @@ See `docs/ARCHITECTURE.md` for the design and `examples/configs/` for runnable c
 
 ## Notes & limitations
 
-- **NVFlare** runs each client in its own simulator process, so client-side hooks
-  (attacks/defenses at `before/after_client_train`) do not apply to it — it is used for
-  cross-framework differential parity of the vanilla FedAvg path. The reference and Flower
+- **NVFlare** runs each client in its own simulator process, so client-side hooks at
+  `before_client_train` and `after_client_train` do not apply to it. That backend is used
+  for cross-framework differential parity of the vanilla FedAvg path. The reference and Flower
   backends support the full hook surface.
 - **DLG** `source: gradient` (default) demonstrates raw-gradient invertibility. The
   `source: shared_update` mode (reconstruct from the uploaded update) is faithful only

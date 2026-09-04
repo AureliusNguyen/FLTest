@@ -1,0 +1,97 @@
+/* FLTest brand tokens — Virginia Tech palette.
+   Generated; edit the source values in one place if you re-theme. */
+
+:root {
+  /* maroon */
+  --fltest-maroon-50: #FBF3F6;
+  --fltest-maroon-100: #F5E2E8;
+  --fltest-maroon-200: #E9C4D0;
+  --fltest-maroon-300: #D598AC;
+  --fltest-maroon-400: #B3607F;
+  --fltest-maroon-500: #861F41;
+  --fltest-maroon-600: #741A38;
+  --fltest-maroon-700: #5E142D;
+  --fltest-maroon-800: #480F23;
+  --fltest-maroon-900: #310A18;
+  /* orange */
+  --fltest-orange-50: #FEF6EE;
+  --fltest-orange-100: #FDE8D3;
+  --fltest-orange-200: #FACCA3;
+  --fltest-orange-300: #F5AC6C;
+  --fltest-orange-400: #EE8F41;
+  --fltest-orange-500: #E5751F;
+  --fltest-orange-600: #C55F13;
+  --fltest-orange-700: #9D4A0E;
+  --fltest-orange-800: #76370A;
+  --fltest-orange-900: #4F2406;
+  /* stone */
+  --fltest-stone-50: #FAF8F8;
+  --fltest-stone-100: #F2EEEF;
+  --fltest-stone-200: #E3DCDE;
+  --fltest-stone-300: #C8BFC2;
+  --fltest-stone-400: #9B9295;
+  --fltest-stone-500: #75787B;
+  --fltest-stone-600: #5B5457;
+  --fltest-stone-700: #433D3F;
+  --fltest-stone-800: #2B1B20;
+  --fltest-stone-900: #1A1013;
+
+  /* semantic — test outcomes */
+  --fltest-pass: #1F7A4C;
+  --fltest-fail: #B3261E;
+  --fltest-warn: #E5751F;
+  --fltest-info: #3B6EA5;
+
+  /* roles */
+  --fltest-primary: var(--fltest-maroon-500);
+  --fltest-primary-dark: var(--fltest-maroon-700);
+  --fltest-primary-light: var(--fltest-maroon-400);
+  --fltest-accent: var(--fltest-orange-500);
+  --fltest-surface: #ffffff;
+  --fltest-surface-muted: var(--fltest-stone-50);
+  --fltest-text: var(--fltest-stone-800);
+  --fltest-text-muted: var(--fltest-stone-600);
+  --fltest-border: var(--fltest-stone-200);
+
+  /* type */
+  --fltest-font-display: "Inter Display", Inter, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --fltest-font-body: Inter, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --fltest-font-mono: "JetBrains Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Dark surfaces: lighten the accent so it clears 4.5:1 on maroon. */
+[data-theme="dark"], .fltest-dark {
+  --fltest-surface: var(--fltest-maroon-900);
+  --fltest-surface-muted: var(--fltest-maroon-800);
+  --fltest-text: #f5eef0;
+  --fltest-text-muted: var(--fltest-stone-300);
+  --fltest-border: var(--fltest-maroon-700);
+  --fltest-accent: var(--fltest-orange-300);
+}
+
+/* MkDocs Material bindings — light scheme */
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: var(--fltest-maroon-500);
+  --md-primary-fg-color--light: var(--fltest-maroon-400);
+  --md-primary-fg-color--dark: var(--fltest-maroon-700);
+  --md-accent-fg-color: var(--fltest-orange-600);
+  --md-typeset-a-color: var(--fltest-maroon-500);
+  --md-default-fg-color: var(--fltest-stone-800);
+  --md-code-hl-keyword-color: var(--fltest-maroon-500);
+}
+
+/* MkDocs Material bindings — slate scheme */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: var(--fltest-maroon-700);
+  --md-primary-fg-color--light: var(--fltest-maroon-400);
+  --md-primary-fg-color--dark: var(--fltest-maroon-900);
+  --md-accent-fg-color: var(--fltest-orange-300);
+  --md-typeset-a-color: var(--fltest-orange-300);
+  --md-default-bg-color: var(--fltest-maroon-900);
+}
+
+/* Small helpers */
+.fltest-rule { height: 4px; border: 0; background: var(--fltest-accent); }
+.fltest-badge-pass { color: var(--fltest-pass); }
+.fltest-badge-fail { color: var(--fltest-fail); }
+.fltest-badge-warn { color: var(--fltest-warn); }

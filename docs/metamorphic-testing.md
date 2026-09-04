@@ -5,9 +5,10 @@ metric — no ground-truth label needed. Code: `fltest/testing/metamorphic.py`.
 
 ## What is measured
 
-For each relation, FLTest sweeps one parameter over `values`, runs the simulation at each
-value (on the first framework in `runs:`), reads one scalar `metric` from each run's `final`
-(default `accuracy`), and applies a monotonicity rule with a `tolerance`.
+For each relation, FLTest sweeps one parameter over `values` and runs the simulation at
+each value, using the first framework in `runs:`. It then reads one scalar `metric` from
+each run's `final` (default `accuracy`) and applies a monotonicity rule with a
+`tolerance`.
 
 To isolate the swept parameter, any *other* list-valued knob is collapsed to its first value
 ("scalarized") for these runs.

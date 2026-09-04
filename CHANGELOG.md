@@ -1,9 +1,9 @@
 # Changelog
 
 Every release of FLTest is recorded here. Versions follow [semantic
-versioning](https://semver.org). The patch number changes for a fix, the minor number for
-new capability that leaves existing configs working, and the major number for a break in
-the configuration schema or the plugin API.
+versioning](https://semver.org). The patch number changes for a fix and the minor number
+for new capability that leaves existing configs working. The major number changes when the
+configuration schema or the plugin API breaks.
 
 ## 0.1.0
 
