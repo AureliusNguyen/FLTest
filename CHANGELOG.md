@@ -5,6 +5,30 @@ versioning](https://semver.org). The patch number changes for a fix and the mino
 for new capability that leaves existing configs working. The major number changes when the
 configuration schema or the plugin API breaks.
 
+## 0.3.4
+
+**Fixed.** The NVFlare backend only ever worked on 1-channel, 10-class data. It rebuilds the
+model in its server process from the class path and recovers constructor arguments by
+reading attributes of the same name off the instance. The built-in models did not expose
+`channels` or `num_classes`, so NVFlare fell back to their defaults and sent every client a
+model shaped for MNIST. CIFAR-10 failed on that path before this release, and so did
+CIFAR-100 and FEMNIST. The models now expose those arguments, and
+`examples/configs/differential_cifar10_3way.yaml` is a three-way parity check on 3-channel
+data, which the MNIST example could not catch.
+
+**Fixed.** NVFlare round snapshots are keyed by round number in a cache that was never
+cleared between runs. A run that produced no snapshots of its own replayed the previous
+run's and reported them as its results. The cache is now cleared alongside the workspace.
+
+**Changed.** The NVFlare backend now refuses a torchvision or Hugging Face model with a
+message naming the built-in models and the backends that do run it. It previously failed
+inside NVFlare with a JSON encoding error.
+
+## 0.3.3
+
+Documentation uses the light scheme only, so the dark toggle and its maroon page background
+are gone. Removed the brand section from the landing page.
+
 ## 0.3.2
 
 **CI.** Added `.github/workflows/ci.yml`, which runs on every pull request and on pushes to
