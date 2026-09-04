@@ -60,7 +60,7 @@ def expand_run_specs(config: TestConfig) -> List[RunSpec]:
         total_cpus=config.total_cpus, total_gpus=config.total_gpus,
         dataset_partitions=config.dataset_partitions,
         server_batch_size=config.server_batch_size, max_test_data_size=config.max_test_data_size,
-        loss_fn=config.loss_fn,
+        loss_fn=config.loss_fn, tokenizer=config.tokenizer,
         model_cache_path=config.model_cache_path, dataset_cache_path=config.dataset_cache_path,
         fw_cache_path=config.fw_cache_path,
     )
@@ -98,7 +98,8 @@ def prepare_data(spec: RunSpec) -> Dict[str, Any]:
     """Load + partition the dataset and build loaders for a spec (cached)."""
     dataset_dict = get_cached_federated_dataset(
         spec.dataset, spec.dataset_partitions, spec.dataset_cache_path,
-        spec.data_distribution, **spec.partitioner_kwargs(),
+        spec.data_distribution, tokenizer_id=spec.tokenizer_id(),
+        **spec.partitioner_kwargs(),
     )
     loaders = build_dataloaders(
         dataset_dict, spec.num_clients, spec.client_batch_size,

@@ -107,6 +107,12 @@ class DLGAttack(ThreatModelBaseClass):
         load_ndarrays_into(model, ctx.global_state)
         model.eval()
         batch = next(iter(ctx.client_data))
+        if "img" not in batch:
+            raise ValueError(
+                "The dlg attack reconstructs pixels from gradients, so it needs an image "
+                "dataset. This run carries text, where gradient inversion recovers tokens "
+                "instead and is not implemented."
+            )
         images = batch["img"][: self.num_images].to(spec.device).float()
         labels = batch["label"][: self.num_images].to(spec.device).long()
         return model, images, labels

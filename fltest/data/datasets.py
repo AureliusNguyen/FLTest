@@ -37,7 +37,8 @@ class DatasetSpec:
     """Everything FLTest needs to know about a dataset to federate it."""
 
     hf_id: str                      # id passed to flwr-datasets / Hugging Face
-    column: str                     # column holding the input (an image)
+    column: str                     # column holding the input (an image, or text)
+    modality: str = "image"         # "image" or "text"
     label_column: str = "label"     # column holding the class label
     channels: int = 1               # 1 grayscale, 3 RGB
     num_classes: int = 10
@@ -45,6 +46,7 @@ class DatasetSpec:
     natural_partition_by: str = ""  # column giving a real-world client id, if the data has one
     test_split: str = "test"        # split to evaluate on; "" means hold one out of train
     holdout_size: int = 10_000      # examples held out when test_split is ""
+    max_length: int = 128           # tokens kept per example, text only
 
 
 DATASET_CONFIG: Dict[str, DatasetSpec] = {
@@ -68,6 +70,13 @@ DATASET_CONFIG: Dict[str, DatasetSpec] = {
         # be held out before partitioning. Slicing it out of the client shards instead would
         # evaluate the global model on data its own clients trained on.
         test_split="",
+    ),
+    # AG News topics stand in for domains. Partitioning it with `pathological` and
+    # `classes_per_partition: 1` gives each client a single topic, which is the
+    # one-domain-per-client setting used to study non-IID federated language models.
+    "ag_news": DatasetSpec(
+        "fancyzhx/ag_news", "text", modality="text",
+        channels=0, num_classes=4, transform="",
     ),
 }
 
@@ -157,13 +166,45 @@ def dataset_meta(dataset_name: str):
     return spec.channels, spec.num_classes
 
 
-def get_federated_dataset(dataset_name: str, num_clients: int, partitioner: str = "iid", **part_kwargs):
+def _tokenize_split(split, spec: DatasetSpec, tokenizer_id: str):
+    """Tokenise a text split into ``input_ids`` / ``attention_mask`` / ``label``."""
+    if not tokenizer_id:
+        raise ValueError(
+            f"'{spec.hf_id}' is a text dataset, so FLTest needs a tokenizer. Set a Hugging "
+            f"Face model with `model_name: hf:<id>` and its tokenizer is used, or name one "
+            f"explicitly with `tokenizer: <id>`."
+        )
+    try:
+        from transformers import AutoTokenizer
+    except ImportError as exc:
+        raise ImportError(
+            'Text datasets need the Hugging Face extra. Install it with pip install -e ".[hf]"'
+        ) from exc
+
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_id)
+
+    def encode(batch):
+        return tokenizer(
+            batch, padding="max_length", truncation=True, max_length=spec.max_length
+        )
+
+    keep = {"input_ids", "attention_mask", "label"}
+    split = split.map(encode, input_columns=spec.column, batched=True)
+    return split.remove_columns([c for c in split.column_names if c not in keep])
+
+
+def get_federated_dataset(
+    dataset_name: str,
+    num_clients: int,
+    partitioner: str = "iid",
+    tokenizer_id: str = "",
+    **part_kwargs,
+):
     """Partition ``dataset_name`` into ``num_clients`` shards (HF datasets, not loaders)."""
     if partitioner not in PARTITIONERS:
         raise ValueError(f"Unknown partitioner '{partitioner}'. Available: {list_partitioners()}")
 
     spec = resolve_dataset(dataset_name)
-    transform = _TRANSFORMS[spec.transform]
 
     if partitioner == "natural":
         if not spec.natural_partition_by:
@@ -191,15 +232,16 @@ def get_federated_dataset(dataset_name: str, num_clients: int, partitioner: str 
         test_raw = holdout["test"]
         client_raw = {cid: part.load_partition(cid) for cid in range(num_clients)}
 
-    def apply_transform(img):
-        return {"img": transform(img)}
-
     def prepare(split):
-        split = split.map(apply_transform, input_columns=spec.column)
         # Every downstream consumer reads batch["label"], so normalise the label column
         # name here rather than teaching the training loops about each dataset.
         if spec.label_column != "label":
             split = split.rename_column(spec.label_column, "label")
+        if spec.modality == "text":
+            split = _tokenize_split(split, spec, tokenizer_id)
+        else:
+            transform = _TRANSFORMS[spec.transform]
+            split = split.map(lambda img: {"img": transform(img)}, input_columns=spec.column)
         return split.with_format("torch")
 
     return {
@@ -209,14 +251,25 @@ def get_federated_dataset(dataset_name: str, num_clients: int, partitioner: str 
 
 
 def get_cached_federated_dataset(
-    dataset_name: str, num_clients: int, cache_path: str, partitioner: str = "iid", **part_kwargs
+    dataset_name: str,
+    num_clients: int,
+    cache_path: str,
+    partitioner: str = "iid",
+    tokenizer_id: str = "",
+    **part_kwargs,
 ):
-    """Cached wrapper around :func:`get_federated_dataset` keyed by (dataset, n, partitioner, kwargs)."""
+    """Cached wrapper around :func:`get_federated_dataset`.
+
+    The key covers the tokenizer too, since two models with different tokenizers produce
+    different token ids from the same text.
+    """
     cache = Index(cache_path)
     kw = "_".join(f"{k}{v}" for k, v in sorted(part_kwargs.items()))
-    key = f"{dataset_name}_{num_clients}_{partitioner}_{kw}"
+    key = f"{dataset_name}_{num_clients}_{partitioner}_{tokenizer_id}_{kw}"
     if key not in cache:
-        cache[key] = get_federated_dataset(dataset_name, num_clients, partitioner, **part_kwargs)
+        cache[key] = get_federated_dataset(
+            dataset_name, num_clients, partitioner, tokenizer_id=tokenizer_id, **part_kwargs
+        )
     return cache[key]
 
 

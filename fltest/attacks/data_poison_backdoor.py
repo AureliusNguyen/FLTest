@@ -36,6 +36,12 @@ class _BackdoorLoader:
 
     def __iter__(self):
         for batch in self._base:
+            if "img" not in batch:
+                raise ValueError(
+                    "The backdoor attack stamps a trigger patch onto pixels, so it needs an "
+                    "image dataset. This run carries text. Use a poisoning attack that works "
+                    "on labels or updates, such as label_flip, sign_flip, or gaussian."
+                )
             images = batch["img"].clone()
             labels = torch.as_tensor(batch["label"]).clone()
             n = labels.size(0)
@@ -83,6 +89,8 @@ class BackdoorAttack(ThreatModelBaseClass):
 
         hit, total = 0, 0
         for batch in ctx.test_data:
+            if "img" not in batch:
+                return  # text run; the training-side guard reports the misconfiguration
             images = _stamp(batch["img"].to(spec.device), self.patch_size, self.patch_value)
             labels = batch["label"].to(spec.device)
             # Exclude samples whose true label is already the target.

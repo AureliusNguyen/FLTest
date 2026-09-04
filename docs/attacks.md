@@ -10,6 +10,10 @@ attacks:
 
 Multiple attacks compose. `target_clients` restricts which clients are adversarial.
 
+`backdoor` and `dlg` operate on pixels, so they apply only to image datasets and raise a
+clear error on a text run. `label_flip`, `sign_flip`, and `gaussian` work on labels and
+updates, so they apply to either modality.
+
 ## Catalog
 
 | Name | Type | Hook(s) | Key params |

@@ -1,0 +1,30 @@
+# Federated text with one topic per client, the extreme non-IID setting for language data.
+#
+# AG News labels each article as world, sports, business, or sci-tech. Partitioning it
+# with `pathological` and one class per client gives every client a single topic, so no
+# two clients share a domain. That is the text analogue of the single-class-per-client
+# split used to stress CNN robustness.
+#
+# Needs the Hugging Face extra: pip install -e ".[hf]"
+name: text_domains
+dataset: ag_news
+model_name: hf:google/bert_uncased_L-2_H-128_A-2
+# That repo carries no fast tokenizer, so borrow the standard BERT one. Both use the same
+# 30522-token WordPiece vocabulary, which is what makes the pairing valid.
+tokenizer: google-bert/bert-base-uncased
+num_clients: 4
+num_rounds: 3
+client_epochs: 1
+client_lr: 0.0005
+client_batch_size: 16
+optimizer: Adam
+dataset_partitions: 200
+max_test_data_size: 512
+total_cpus: 6
+metrics: [accuracy, loss, per_client]
+
+# The comparison is the point: identical everything except how the topics are spread.
+runs:
+  - {framework: reference, name: iid, data_distribution: iid}
+  - {framework: reference, name: one_topic_per_client,
+     data_distribution: pathological, classes_per_partition: 1}

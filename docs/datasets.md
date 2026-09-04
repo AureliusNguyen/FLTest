@@ -12,6 +12,7 @@ FLTest loads and partitions datasets with [`flwr-datasets`](https://flower.ai/do
 | `cifar10` | 3 | 10 | natural images (RGB) |
 | `cifar100` | 3 | 100 | 100 fine-grained classes; labels live in `fine_label` |
 | `femnist` | 1 | 62 | handwritten characters **labelled by writer**; naturally non-IID |
+| `ag_news` | text | 4 | news topics; needs the `[hf]` extra (see below) |
 
 Use one with `dataset: cifar10`, or fuzz several with `dataset: [mnist, cifar100, femnist]`.
 Channels and class count are derived automatically, so you never set them by hand.
@@ -74,6 +75,52 @@ data_distribution: dirichlet
 dirichlet_alpha: 0.1        # strongly non-IID
 num_clients: 10
 ```
+
+## Text datasets
+
+`ag_news` is a text dataset, so it needs a tokenizer and a Hugging Face sequence
+classifier. Install the extra with `pip install -e ".[hf]"`.
+
+```yaml
+dataset: ag_news
+model_name: hf:google/bert_uncased_L-2_H-128_A-2
+tokenizer: google-bert/bert-base-uncased   # optional, see below
+```
+
+The tokenizer defaults to the model's own. Name one explicitly when a model repository
+ships no fast tokenizer but shares another model's vocabulary. That is the case above,
+where both use the same 30522-token WordPiece vocabulary. Token ids are
+part of the dataset cache key, so two models with different tokenizers never share a cache
+entry.
+
+### One domain per client
+
+AG News labels each article as world, sports, business, or sci-tech. Partitioning it with
+`pathological` and one class per client gives every client a single topic, so no two
+clients share a domain. That is the text analogue of the single-class-per-client split used
+to stress CNNs.
+
+```bash
+fltest run examples/configs/text_domains.yaml
+```
+
+That example runs the same setup twice, changing only how topics are spread:
+
+| run | distribution | accuracy | worst client |
+|-----|--------------|:--------:|:------------:|
+| `iid` | iid | 0.4629 | 0.4617 |
+| `one_topic_per_client` | pathological, 1 class | 0.2402 | **0.0000** |
+
+With one topic per client the global model falls to chance for four classes. At least one
+client scores nothing at all. The IID run reaches 0.4629 from identical data, model, and
+budget.
+
+### What does not apply to text
+
+`backdoor` stamps a trigger patch onto pixels and `dlg` reconstructs pixels from
+gradients, so neither applies to a text run. Both raise an error saying so rather than
+failing on a missing column. `label_flip`, `sign_flip`, and `gaussian` work on labels and
+updates, so they apply to either modality, as do every defense and metric.
 
 ## Use an existing dataset
 
