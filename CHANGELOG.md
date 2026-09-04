@@ -5,6 +5,25 @@ versioning](https://semver.org). The patch number changes for a fix and the mino
 for new capability that leaves existing configs working. The major number changes when the
 configuration schema or the plugin API breaks.
 
+## 0.4.3
+
+**Worked example.** The exhaustive attack and defense matrix moves from MNIST with an MLP
+to CIFAR-10 with LeNet, and gains two privacy scenarios. Ten balanced classes make a
+collapsed model obvious, since chance sits at 0.10.
+
+The new numbers carry findings the MNIST version could not show. `norm_clip` at 0.5 reports
+the worst attack success rate in the matrix, 0.9924, while its accuracy falls to 0.1094.
+Clipping that hard stopped the model learning and it collapsed to predicting the attacker's
+target label, which is a constant predictor scoring near 1.0 on a triggered test set. That
+makes the case that attack success rate means nothing read alone.
+
+Membership inference returns 0.4831, which is chance, because this model underfits and has
+memorized nothing to expose. The dedicated example reaches 0.67. A privacy result of no
+leakage describes the training regime rather than the defense.
+
+`differential_cifar10_3way.yaml` now trains to a comparable accuracy, so its parity check
+compares three backends that have actually learned rather than three sitting at chance.
+
 ## 0.4.2
 
 `docs/assets` holds only assets now. The brand kit's README, brand guide, mkdocs snippet,
