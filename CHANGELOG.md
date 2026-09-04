@@ -5,6 +5,12 @@ versioning](https://semver.org). The patch number changes for a fix and the mino
 for new capability that leaves existing configs working. The major number changes when the
 configuration schema or the plugin API breaks.
 
+## 0.4.2
+
+`docs/assets` holds only assets now. The brand kit's README, brand guide, mkdocs snippet,
+and preview page were build-time material rather than anything the site or the package
+uses, and none of them was referenced.
+
 ## 0.4.1
 
 **Reporting.** The aggregation rule is now an explicit field. `RunSpec.aggregation()` names
