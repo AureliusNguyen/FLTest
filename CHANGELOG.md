@@ -5,6 +5,18 @@ versioning](https://semver.org). The patch number changes for a fix and the mino
 for new capability that leaves existing configs working. The major number changes when the
 configuration schema or the plugin API breaks.
 
+## 0.3.2
+
+**CI.** Added `.github/workflows/ci.yml`, which runs on every pull request and on pushes to
+the default branch. One job installs from a clean checkout and then runs `fltest list`,
+checking the catalog rather than the exit code alone. That is the job that would have
+caught the packaging bug where `fltest/data` existed locally but was never committed. A
+second job runs the test suite, and a third builds the documentation with `--strict`, so a
+broken link or a missing asset fails the build.
+
+**Docs.** The worked example claimed its report file was present. Reports are generated
+rather than checked in, so it now says what running the config writes.
+
 ## 0.3.1
 
 **Branding.** The documentation site now carries the FLTest identity. `brand.css` is loaded

@@ -72,7 +72,9 @@ fltest run examples/configs/exhaustive_eval.yaml
 - **Personalized view.** `per_client_acc_min` tracks the worst-off client; it falls under
   attack and recovers under robust defenses, exposing disparity a single global number hides.
 
-Every value above is in `reports/exhaustive_eval_run.json` (per-round `history` + `final`).
+Running the config writes every value above to `reports/exhaustive_eval_run.json`, with
+the per-round `history` alongside the `final` metrics. Reports are generated rather than
+checked in, so `reports/` is empty in a fresh clone until you run something.
 
 ## 4. Cross-framework differential check
 

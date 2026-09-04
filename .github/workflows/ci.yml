@@ -1,0 +1,61 @@
+name: CI
+
+# Runs on every pull request and on pushes to the default branch. The install job is the
+# one that matters most: it starts from a clean checkout, so a source file that exists
+# locally but was never committed fails here rather than in a user's first session.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install:
+    name: install from a clean checkout
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      # The core install, exactly as docs/installation.md describes it.
+      - run: pip install -e .
+      # docs/installation.md tells a new user to verify with `fltest list`, so verify the
+      # same way, and check the catalog rather than only the exit code.
+      - name: fltest list reports the full catalog
+        run: |
+          fltest list | tee catalog.txt
+          for name in reference flower dlg backdoor median gradient_noise per_client; do
+            grep -q "$name" catalog.txt || { echo "missing from catalog: $name"; exit 1; }
+          done
+
+  test:
+    name: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: pytest tests/ -q
+
+  docs:
+    name: docs build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -e ".[docs]"
+      # --strict turns a broken link or a missing asset into a failure, which is what
+      # keeps the published site honest.
+      - run: mkdocs build --strict
