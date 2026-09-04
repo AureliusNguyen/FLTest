@@ -27,6 +27,17 @@ fltest <command> [args]
   suitable for CI gating.
 - `fltest run` / `fltest pitfalls` exit 0 on completion.
 
+## Console output
+
+`fltest run` prints an aligned table. Settings shared by every run appear once above it,
+and only settings that differ between runs become columns, so a fuzzed grid shows what
+varies rather than repeating itself. The aggregation rule is one of those settings, naming
+`fedavg` or the robust rule that replaced it.
+
+Below the table come a per-round trace of the headline metric and a legend that expands
+every shortened column, so `asr` and `mia-auc` explain themselves without a trip to the
+source.
+
 ## Reports
 
 Each command writes JSON to the output directory:

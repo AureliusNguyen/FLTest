@@ -5,6 +5,18 @@ versioning](https://semver.org). The patch number changes for a fix and the mino
 for new capability that leaves existing configs working. The major number changes when the
 configuration schema or the plugin API breaks.
 
+## 0.4.1
+
+**Reporting.** The aggregation rule is now an explicit field. `RunSpec.aggregation()` names
+`fedavg` or the robust rule that replaced it, it appears in each run's recorded parameters,
+and the run matrix gives it a column or lists it among the shared settings. It was
+previously only inferable from the defense list.
+
+Every shortened column is explained in a legend printed under the table, so `asr`,
+`pc-min`, and `mia-auc` no longer send a reader to the source. A per-round trace of the
+headline metric sits alongside it, since the table alone showed where a run ended but not
+how it got there.
+
 ## 0.4.0
 
 **Membership inference.** Added the `membership_inference` attack, which asks whether a

@@ -1,0 +1,43 @@
+# Paste into mkdocs.yml. Assumes:
+#   docs/assets/logos/          <- contents of svg/
+#   docs/stylesheets/brand.css  <- css/brand.css
+#   docs/assets/logos/fltest-social-preview.png
+
+theme:
+  name: material
+  logo: assets/logos/fltest-mark-on-maroon.svg
+  favicon: assets/logos/fltest-favicon.svg
+  font:
+    text: Geist
+    code: JetBrains Mono
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+
+extra_css:
+  - stylesheets/brand.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/SEED-VT/FLTest
+
+# OpenGraph card, via the meta plugin or a raw tag in overrides/main.html:
+#   <meta property="og:image" content="https://seed-vt.github.io/FLTest/assets/logos/fltest-social-preview.png">
+#   <meta name="twitter:card" content="summary_large_image">

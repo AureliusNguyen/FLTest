@@ -1,5 +1,4 @@
 {
-  "$schema": "https://design-tokens.org/schema.json",
   "name": "FLTest",
   "description": "Brand tokens for FLTest, aligned to the Virginia Tech palette.",
   "palette": {
@@ -46,25 +45,11 @@
     "warn": "#E5751F",
     "info": "#3B6EA5"
   },
-  "roles": {
-    "brand.primary": "maroon.500",
-    "brand.primary-dark": "maroon.700",
-    "brand.primary-light": "maroon.400",
-    "brand.accent": "orange.500",
-    "surface": "#FFFFFF",
-    "surface.muted": "stone.50",
-    "surface.inverse": "maroon.500",
-    "text.body": "stone.800",
-    "text.muted": "stone.600",
-    "text.on-primary": "#FFFFFF",
-    "border": "stone.200",
-    "code.bg": "maroon.900"
-  },
   "typography": {
-    "display": "Inter Display, Inter, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif",
-    "body": "Inter, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif",
+    "display": "Space Grotesk, Inter, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif",
+    "body": "Geist, Inter, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif",
     "mono": "JetBrains Mono, SFMono-Regular, Menlo, Consolas, monospace",
-    "wordmark": "Inter Display Bold, tracking -2.2%, 'FL' in maroon.500 and 'Test' in orange.500"
+    "wordmark": "Space Grotesk SemiBold, tracking -1.5%, single-ink maroon.500"
   },
   "radius": {
     "sm": "6px",
@@ -72,14 +57,17 @@
     "lg": "16px",
     "tile": "22%"
   },
+  "elevation": {
+    "lift": "0 14px 16px rgba(61,10,28,0.30)"
+  },
   "contrast_ratios": {
     "maroon.500 on white": 9.19,
-    "orange.500 on white": 3.05,
-    "orange.700 on white": 6.14,
     "white on maroon.500": 9.19,
-    "orange.500 on maroon.500": 3.02,
-    "orange.300 on maroon.500": 4.81,
     "stone.800 on white": 16.4,
-    "stone.600 on white": 7.37
+    "stone.600 on white": 7.37,
+    "orange.700 on white": 6.14,
+    "orange.300 on maroon.500": 4.81,
+    "orange.500 on white": 3.05,
+    "orange.500 on maroon.500": 3.02
   }
 }

@@ -1,5 +1,4 @@
-/* FLTest brand tokens — Virginia Tech palette.
-   Generated; edit the source values in one place if you re-theme. */
+/* FLTest brand tokens — Virginia Tech palette. Generated. */
 
 :root {
   /* maroon */
@@ -52,10 +51,10 @@
   --fltest-text: var(--fltest-stone-800);
   --fltest-text-muted: var(--fltest-stone-600);
   --fltest-border: var(--fltest-stone-200);
+  --fltest-lift: 0 14px 16px rgba(61, 10, 28, 0.30);
 
-  /* type */
-  --fltest-font-display: "Inter Display", Inter, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
-  --fltest-font-body: Inter, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --fltest-font-display: "Space Grotesk", Inter, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --fltest-font-body: Geist, Inter, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
   --fltest-font-mono: "JetBrains Mono", SFMono-Regular, Menlo, Consolas, monospace;
 }
 
@@ -69,7 +68,7 @@
   --fltest-accent: var(--fltest-orange-300);
 }
 
-/* MkDocs Material bindings — light scheme */
+/* MkDocs Material — light */
 [data-md-color-scheme="default"] {
   --md-primary-fg-color: var(--fltest-maroon-500);
   --md-primary-fg-color--light: var(--fltest-maroon-400);
@@ -77,10 +76,9 @@
   --md-accent-fg-color: var(--fltest-orange-600);
   --md-typeset-a-color: var(--fltest-maroon-500);
   --md-default-fg-color: var(--fltest-stone-800);
-  --md-code-hl-keyword-color: var(--fltest-maroon-500);
 }
 
-/* MkDocs Material bindings — slate scheme */
+/* MkDocs Material — slate */
 [data-md-color-scheme="slate"] {
   --md-primary-fg-color: var(--fltest-maroon-700);
   --md-primary-fg-color--light: var(--fltest-maroon-400);
@@ -90,7 +88,6 @@
   --md-default-bg-color: var(--fltest-maroon-900);
 }
 
-/* Small helpers */
 .fltest-rule { height: 4px; border: 0; background: var(--fltest-accent); }
 .fltest-badge-pass { color: var(--fltest-pass); }
 .fltest-badge-fail { color: var(--fltest-fail); }
