@@ -14,6 +14,32 @@ Supports two modes:
 Load via:
   export FLTEST_HOOKS=examples/hooks/atk_dlg
   poetry run python fltest/main.py
+  poetry run python fltest/main.py datasets=cifar10
+  poetry run python fltest/main.py dataset=cifar10 model_name=ConvNet
+  
+  # Run 1: Single, no defense
+  poetry run python fltest/main.py dataset=cifar10
+  mv tmp/dlg_results tmp/dlg_single_no_def
+
+  # Run 2: Batch, no defense
+  sed -i 's/DLG_BATCH_MODE = False/DLG_BATCH_MODE = True/' examples/hooks/atk_dlg.py
+  poetry run python fltest/main.py dataset=cifar10 model_name=ConvNet
+  mv tmp/dlg_results tmp/dlg_batch_no_def
+
+  # Run 3: Single, with defense
+  sed -i 's/DLG_BATCH_MODE = True/DLG_BATCH_MODE = False/' examples/hooks/atk_dlg.py
+  sed -i 's/DLG_DEFENSE_NOISE = 0.0/DLG_DEFENSE_NOISE = 0.001/' examples/hooks/atk_dlg.py
+  poetry run python fltest/main.py dataset=cifar10 model_name=ConvNet
+  mv tmp/dlg_results tmp/dlg_single_with_def
+
+  # Run 4: Batch, with defense
+  sed -i 's/DLG_BATCH_MODE = False/DLG_BATCH_MODE = True/' examples/hooks/atk_dlg.py
+  poetry run python fltest/main.py dataset=cifar10 model_name=ConvNet
+  mv tmp/dlg_results tmp/dlg_batch_with_def
+
+  # Reset config back to defaults
+  sed -i 's/DLG_BATCH_MODE = True/DLG_BATCH_MODE = False/' examples/hooks/atk_dlg.py
+  sed -i 's/DLG_DEFENSE_NOISE = 0.001/DLG_DEFENSE_NOISE = 0.0/' examples/hooks/atk_dlg.py
 """
 
 import math
@@ -33,8 +59,8 @@ from fltest.adapters.flower.utils import set_parameters
 # Configuration
 
 # True = batch attack, False = per-sample. 
-# DLG_BATCH_MODE = True       
-DLG_BATCH_MODE = False       
+DLG_BATCH_MODE = True       
+# DLG_BATCH_MODE = False       
 DLG_TARGET_CLIENT = 0       # Which client to attack
 DLG_TARGET_ROUND = 1        # Which round (1 = first training round)
 DLG_NUM_SAMPLES = 10        # Samples to attack
@@ -48,6 +74,7 @@ DLG_LR = 0.1                # Adam learning rate
 DLG_LR_DECAY = True         # Decay at 3/8, 5/8, 7/8 of iterations
 DLG_SIGNED = True           # Sign gradient updates (stabilizes Adam)
 DLG_BOXED = True            # Clamp to valid pixel range during optimization
+DLG_DEFENSE_NOISE = 0.1     # Simulated DP noise std (0 = no defense, 0.001 = moderate, 0.01 = strong, 0.1 = very strong)
 
 
 def label_to_onehot(target, num_classes=10):
@@ -157,8 +184,7 @@ def reconstruct(net, original_grads, data_shape, label_shape, device):
             if iters % 10 == 0:
                 history.append(dummy_data.detach().cpu().clone())
                 tag = f"restart {restart}, " if DLG_NUM_RESTARTS > 1 else ""
-                print(f"  [DLG] {tag}iter {iters}/{DLG_NUM_ITERS}, "
-                      f"loss={last_loss:.6f}")
+                # print(f"  [DLG] {tag}iter {iters}/{DLG_NUM_ITERS}, loss={last_loss:.6f}")
 
         if last_loss < best_score:
             best_score = last_loss
@@ -191,7 +217,7 @@ def save_grid(gt_data, rec_data, gt_labels, rec_labels, matching, round_num, cid
     cmap = "gray" if channels == 1 else None
     n = gt_data.shape[0]
 
-    fig, axes = plt.subplots(2, n, figsize=(max(n * 1.8, 6), 4))
+    fig, axes = plt.subplots(2, n, figsize=(max(n * 1.8, 6), 5))
     if n == 1:
         axes = axes.reshape(2, 1)
 
@@ -221,7 +247,7 @@ def save_grid(gt_data, rec_data, gt_labels, rec_labels, matching, round_num, cid
         f"Labels={label_ok}/{n}",
         fontsize=10,
     )
-    fig.tight_layout()
+    fig.tight_layout(h_pad=1.5)
 
     prefix = f"dlg_round{round_num}_client{cid}_{tag}"
     fig.savefig(out_dir / f"{prefix}.png", dpi=150)
@@ -328,10 +354,13 @@ def run_dlg_attack(ctx):
         pred = net(gt_data)
         y = cross_entropy_for_onehot(pred, gt_onehot)
         original_grads = [g.detach().clone() for g in torch.autograd.grad(y, net.parameters())]
+        if DLG_DEFENSE_NOISE > 0:
+            original_grads = [g + torch.randn_like(g) * DLG_DEFENSE_NOISE for g in original_grads]
+            print(f"  [DLG] Defense noise applied: sigma={DLG_DEFENSE_NOISE}")
 
         rec_data, rec_labels, history = reconstruct(net, original_grads, gt_data.shape, gt_onehot.shape, device)
         matching = match_batch(gt_data, rec_data)
-        _save_grid(gt_data, rec_data, gt_labels, rec_labels, matching, ctx.round, ctx.client_id, cfg, out_dir, "batch")
+        save_grid(gt_data, rec_data, gt_labels, rec_labels, matching, ctx.round, ctx.client_id, cfg, out_dir, "batch")
         save_history(history, ctx.round, ctx.client_id, cfg, out_dir, "batch")
 
     else:
@@ -345,6 +374,10 @@ def run_dlg_attack(ctx):
             pred = net(gt_i)
             y = cross_entropy_for_onehot(pred, gt_onehot_i)
             original_grads = [g.detach().clone() for g in torch.autograd.grad(y, net.parameters())]
+            if DLG_DEFENSE_NOISE > 0:
+                original_grads = [g + torch.randn_like(g) * DLG_DEFENSE_NOISE for g in original_grads]
+                if i == 0:
+                    print(f"  [DLG] Defense noise applied: sigma={DLG_DEFENSE_NOISE}")
 
             rec_data, rec_label, history = reconstruct(net, original_grads, gt_i.shape, gt_onehot_i.shape, device)
             all_rec_data.append(rec_data)
